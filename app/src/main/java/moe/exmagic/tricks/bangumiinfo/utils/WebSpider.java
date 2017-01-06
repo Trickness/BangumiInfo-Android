@@ -37,8 +37,7 @@ public class WebSpider {
     private Map<String,String> Cookies = null;
     public String   error           = "";
     public String   keyWord         = "";
-    private String  TargetUrl       = "";               // 备查
-    private Connection.Response  HttpResult = null;
+    private String  TargetUrl       = "";
     private Document             HttpDocument = null;
 
     public Fragment parent;
@@ -63,7 +62,7 @@ public class WebSpider {
         @Override
         protected Void doInBackground(WebSpider... params){
             WebSpider parent = params[0];
-            Connection.Response res = null;
+            Connection.Response res;
             try {
                 res = Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute();
             }catch (IOException e){
@@ -71,7 +70,6 @@ public class WebSpider {
                 return null;
             }
             parent.setCookies(res.cookies());
-            parent.HttpResult = res;
             return null;
         }
     }
@@ -91,6 +89,7 @@ public class WebSpider {
                         .cookies(mParent.getCookies())
                         .timeout(3000)
                         .get();
+                Log.d("tRGETURL:",mParent.TargetUrl);
                 Log.d("DOCUMENT:",mParent.HttpDocument.html());
             }catch (IOException e){
                 mParent.setError(e.toString());
@@ -168,8 +167,7 @@ public class WebSpider {
     public Map<String,String> getCookies(){
         return  this.Cookies;
     }
-    public static WebSpider.SearchResult parseDOMResult(Document doc,int currentPage, String searchType, String keyWords){
-        Document HttpDocument = doc;
+    public static WebSpider.SearchResult parseDOMResult(Document HttpDocument,int currentPage, String searchType, String keyWords){
         if(HttpDocument == null){
             return null;
         }
@@ -185,7 +183,10 @@ public class WebSpider {
         for (Element Item : Items){
             resultItem = new DataType.SearchResultItem();
             resultItem.ItemId = Integer.valueOf(Item.attr("id").substring(5));
-            resultItem.CoverUrl = Item.getElementsByTag("img").first().attr("src");
+            if(Item.getElementsByTag("img").first() != null)
+                resultItem.CoverUrl = Item.getElementsByTag("img").first().attr("src");
+            else
+                resultItem.CoverUrl = "";
             resultItem.DetailUrl = WebSpider.BASE_SITE + "subject/" + resultItem.ItemId;
 
             Item = Item.getElementsByClass("inner").first();
@@ -203,13 +204,13 @@ public class WebSpider {
             if (Item.getElementsByClass("rank").first() != null){
                 resultItem.Rank = Integer.valueOf(Item.getElementsByClass("rank").first().ownText());
             }else{
-                resultItem.Rank = -1;
+                resultItem.Rank = 0;
             }
 
             if (Item.getElementsByClass("fade").first() != null){
                 resultItem.Score = Float.parseFloat(Item.getElementsByClass("fade").first().ownText());
             }else{
-                resultItem.Score = -1;
+                resultItem.Score = 0;
             }
 
             if (Item.getElementsByClass("tip_j").first() != null)

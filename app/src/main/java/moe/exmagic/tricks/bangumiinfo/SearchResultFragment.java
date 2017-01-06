@@ -1,8 +1,12 @@
 package moe.exmagic.tricks.bangumiinfo;
 
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -48,7 +52,7 @@ public class SearchResultFragment extends Fragment{
         super.onCreate(savedInstanceState);
     }
     private class FetchBitmap extends AsyncTask<Void,Void,Bitmap>{
-        private ImageView mV;  
+        private ImageView mV;
         private String    mStrUrl;
         private DataType.SearchResultItem mItem;
         FetchBitmap(ImageView view, String strUrl, DataType.SearchResultItem item){
@@ -71,8 +75,7 @@ public class SearchResultFragment extends Fragment{
                 conn.setRequestMethod("GET");
                 if (conn.getResponseCode() == 200) {
                     InputStream inputStream = conn.getInputStream();
-                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-                    return bitmap;
+                    return BitmapFactory.decodeStream(inputStream);
                 }
             }catch(IOException e){
                 return null;
@@ -100,6 +103,8 @@ public class SearchResultFragment extends Fragment{
             pOriginalTitleView = (TextView) itemView.findViewById(R.id.textViewOriginalTitle);
             pRankView = (TextView) itemView.findViewById(R.id.textRankInfoView);
             pCoverView = (ImageView) itemView.findViewById(R.id.coverView);
+            itemView.setClickable(true);
+            itemView.setBackgroundResource(R.drawable.rect_gray);
         }
     }
     private class ItemsAdapter extends RecyclerView.Adapter<ItemsHolder> {
@@ -123,10 +128,15 @@ public class SearchResultFragment extends Fragment{
             DataType.SearchResultItem item = mResults.result.get(position);
             holder.pTitleView.setText(item.Title);
             holder.pOriginalTitleView.setText(item.OriginalTitle);
-            holder.pRankView.setText(item.RankN);
+            if(item.Score != 0)
+                holder.pRankView.setText("RANK:" + item.Rank + "  SCORE:" + item.Score);
+            else
+                holder.pRankView.setText("No Rank Information");
             if(item.Cover != null){
                 holder.pCoverView.setImageBitmap(item.Cover);
-            }else {
+            }else if(item.CoverUrl.equals("")){
+                return;
+            } else {
                 if (item.isLoading)
                     return;
                 item.isLoading = true;

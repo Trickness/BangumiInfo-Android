@@ -6,16 +6,19 @@
     android:layout_marginBottom="8dp"
     android:layout_marginStart="12dp"
     android:layout_marginEnd="12dp"
-    android:background="@color/colorItemBase"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:background="@drawable/rect_gray"
     android:layout_height="118dp">
     <ImageView
         android:id="@+id/coverView"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginStart="12dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:layout_marginStart="6dp"
+        android:layout_marginLeft="6dp"
         android:layout_marginEnd="12dp"
-        android:layout_height="100dp"
-        android:layout_width="74dp" />
+        android:layout_marginRight="12dp"
+        android:layout_height="110dp"
+        android:layout_width="80dp" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -30,25 +33,22 @@
             android:id="@+id/textViewTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:text="恋剣乙女"/>
+            android:textSize="18sp"
+            android:textStyle="bold" />
         <TextView
             android:id="@+id/textViewOriginalTitle"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="恋剣乙女"/>
+            android:layout_height="wrap_content" />
 
 
     </LinearLayout>
     <TextView
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="96dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="6dp"
-        android:layout_marginRight="6dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginRight="12dp"
         android:layout_gravity="end"
         android:textAlignment="textEnd"
-        android:text="Score 7.2 Rank:2501"
         android:id="@+id/textRankInfoView" />
 </RelativeLayout>

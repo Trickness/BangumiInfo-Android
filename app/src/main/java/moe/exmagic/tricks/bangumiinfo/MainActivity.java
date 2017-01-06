@@ -1,5 +1,6 @@
 package moe.exmagic.tricks.bangumiinfo;
 
+import android.animation.Animator;
 import android.app.SearchManager;
 import android.content.Context;
 import android.support.v4.app.Fragment;
@@ -9,6 +10,10 @@ import android.os.Bundle;
 import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
 
 import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
 
@@ -49,8 +54,6 @@ public class MainActivity extends AppCompatActivity implements  SearchView.OnQue
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.options_menu, menu);
 
-        SearchManager searchManager =
-                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         SearchView searchView =
                 (SearchView) menu.findItem(R.id.search).getActionView();
 
