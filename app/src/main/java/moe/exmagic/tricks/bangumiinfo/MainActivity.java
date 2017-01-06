@@ -1,8 +1,6 @@
 package moe.exmagic.tricks.bangumiinfo;
 
-import android.animation.Animator;
-import android.app.SearchManager;
-import android.content.Context;
+
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
@@ -10,10 +8,7 @@ import android.os.Bundle;
 import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.View;
-import android.view.ViewAnimationUtils;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.AccelerateInterpolator;
+
 
 import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
 

@@ -1,14 +1,11 @@
 package moe.exmagic.tricks.bangumiinfo;
 
-import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -35,21 +32,59 @@ public class SearchResultFragment extends Fragment{
     private RecyclerView mItemListView;
     private ItemsAdapter mAdapter;
     private String mSearchKeyWord = "";
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+    private RecyclerView.LayoutManager mLayoutManager;
+    private scrollListener mScrollListener;
     public void updateUI(WebSpider.SearchResult result){
         if(result == null)
             return;
         mAdapter = new ItemsAdapter(result);
         mItemListView.setAdapter(mAdapter);
+        mSwipeRefreshLayout.setRefreshing(false);
+    }
+    public void appendUI(WebSpider.SearchResult result){
+        if(result == null)
+            return;
+
+        View topView = mLayoutManager.getChildAt(0);          //获取可视的第一个view
+        int lastOffset = topView.getTop();                                   //获取与该view的顶部的偏移量
+        int lastPosition = mLayoutManager.getPosition(topView);  //得到该View的数组位置
+
+        result.result.addAll(0,mAdapter.getListData().result);
+        this.mAdapter.updateListData(result);
+        mItemListView.setAdapter(mAdapter);
+
+        ((LinearLayoutManager)mLayoutManager).scrollToPositionWithOffset(lastPosition, lastOffset);
+
+        mSwipeRefreshLayout.setRefreshing(false);
     }
     public void search(String keyWord){
         this.mSearchKeyWord = keyWord;
         WebSpider spider = WebSpider.get(getActivity());
-        WebSpider.SearchResult result = spider.searchItem(mSearchKeyWord,WebSpider.SEARCH_ALL,0);
+        WebSpider.SearchResult result = spider.searchItem(mSearchKeyWord,WebSpider.SEARCH_ALL,1);
         this.updateUI(result);
+        mSwipeRefreshLayout.setRefreshing(true);
     }
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+    }
+    private class scrollListener extends RecyclerView.OnScrollListener {
+        private int lastVisibleItem;
+        @Override
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+            if (newState == RecyclerView.SCROLL_STATE_IDLE
+                    && lastVisibleItem + 1 == mAdapter.getItemCount()) {
+                mSwipeRefreshLayout.setRefreshing(true);
+                mAdapter.getListData().getNext();   // It will refresh ui
+            }
+        }
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            lastVisibleItem = ((LinearLayoutManager)mLayoutManager).findLastCompletelyVisibleItemPosition();
+        }
     }
     private class FetchBitmap extends AsyncTask<Void,Void,Bitmap>{
         private ImageView mV;
@@ -109,7 +144,9 @@ public class SearchResultFragment extends Fragment{
     }
     private class ItemsAdapter extends RecyclerView.Adapter<ItemsHolder> {
         private WebSpider.SearchResult mResults;
-
+        public WebSpider.SearchResult getListData(){
+            return mResults;
+        }
         public ItemsAdapter(WebSpider.SearchResult results){
             mResults = results;
         }
@@ -125,6 +162,7 @@ public class SearchResultFragment extends Fragment{
         }
         @Override
         public void onBindViewHolder(ItemsHolder holder, int position){
+            holder.pCoverView.setImageBitmap(null);
             DataType.SearchResultItem item = mResults.result.get(position);
             holder.pTitleView.setText(item.Title);
             holder.pOriginalTitleView.setText(item.OriginalTitle);
@@ -143,13 +181,30 @@ public class SearchResultFragment extends Fragment{
                 new FetchBitmap(holder.pCoverView, item.CoverUrl,item).execute();
             }
         }
+
+        public void updateListData(WebSpider.SearchResult result){
+            this.mResults = result;
+        }
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View v = inflater.inflate(R.layout.fragment_search_result_list,container,false);
         mItemListView = (RecyclerView) v.findViewById(R.id.placeholder_rv_recycler);
-        mItemListView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        mItemListView.setLayoutManager(mLayoutManager);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipeRefreshLayout);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if(!mSearchKeyWord.equals(""))
+                    updateUI(WebSpider.get(getActivity()).searchItem(mSearchKeyWord,WebSpider.SEARCH_ALL,1));
+                else
+                    mSwipeRefreshLayout.setRefreshing(false);
+            }
+        });
+
+        mScrollListener = new scrollListener();
+        mItemListView.setOnScrollListener(mScrollListener);
         return v;
     }
-
 }

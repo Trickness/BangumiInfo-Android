@@ -39,25 +39,22 @@ public class WebSpider {
     public String   keyWord         = "";
     private String  TargetUrl       = "";
     private Document             HttpDocument = null;
-
     public Fragment parent;
 
-    private int syn_lock = 0;
-    public boolean lock(){
-        while(this.syn_lock == 1){
-            try{
-                Thread.sleep(100);
-            }catch(InterruptedException e){
-                return false;
+    public static class SearchResult{
+        public int maxpage = 0;
+        public int currentpage = 0;
+        public String searchtype = "0";
+        public String keyword = "";
+        public WebSpider parent = null;
+        public SearchResult getNext(){
+            if (this.currentpage == this.maxpage) {
+                return null;
             }
+            return this.parent.searchItem(this.keyword, this.searchtype, this.currentpage+1);
         }
-        this.syn_lock = 1;
-        return true;
+        public ArrayList<DataType.SearchResultItem> result = new ArrayList<>();
     }
-    public void unlock(){
-        this.syn_lock = 0;
-    }
-
     private class FetchResponse extends AsyncTask<WebSpider,Void,Void> {
         @Override
         protected Void doInBackground(WebSpider... params){
@@ -103,22 +100,30 @@ public class WebSpider {
         @Override
         protected void onPostExecute(Void v){
             SearchResultFragment fm = (SearchResultFragment)this.mParent.parent;
-            fm.updateUI(WebSpider.parseDOMResult(this.mParent.HttpDocument,mCurrentPage,mSearchType,this.mParent.keyWord));
+            WebSpider.SearchResult result = WebSpider.parseDOMResult(this.mParent.HttpDocument,mCurrentPage,mSearchType,this.mParent.keyWord);
+            result.parent = this.mParent;
+            if(mCurrentPage == 1)
+                fm.updateUI(result);
+            else
+                fm.appendUI(result);
+
         }
     }
-    public static class SearchResult{
-        public int maxpage = 0;
-        public int currentpage = 0;
-        public String searchtype = "0";
-        public String keyword = "";
-        public WebSpider parent = null;
-        public SearchResult getNext(){
-            if (this.currentpage == this.maxpage) {
-                return null;
+
+    private int syn_lock = 0;
+    public boolean lock(){
+        while(this.syn_lock == 1){
+            try{
+                Thread.sleep(100);
+            }catch(InterruptedException e){
+                return false;
             }
-            return this.parent.searchItem(this.keyword, this.searchtype, this.currentpage+1);
         }
-        public ArrayList<DataType.SearchResultItem> result = new ArrayList<>();
+        this.syn_lock = 1;
+        return true;
+    }
+    public void unlock(){
+        this.syn_lock = 0;
     }
 
     private WebSpider(Context context) {     // initlized
@@ -134,7 +139,6 @@ public class WebSpider {
         this.SearchItem("Heart",WebSpider.SEARCH_ALL,0);*/
         // test CODE END
     }
-
     public Document FetchHTTPResult(String keyWords,String type, int page){
         String targetUrl;
         targetUrl = BASE_SITE + "subject_search/" + WebSpider.StringFilter(keyWords) + "?cat=" + type;
@@ -148,15 +152,6 @@ public class WebSpider {
             return null;
         new FetchHttp(this,page,type).execute();
         return null;
-        /*while(this.syn_lock == 1) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                this.setError(e.toString());
-                return null;
-            }
-        }
-        return this.HttpDocument;*/
     }
     public void setCookies(Map<String,String> cookies){
         this.Cookies = cookies;
