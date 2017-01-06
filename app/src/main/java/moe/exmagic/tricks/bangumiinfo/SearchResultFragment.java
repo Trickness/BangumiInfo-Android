@@ -48,7 +48,7 @@ public class SearchResultFragment extends Fragment{
         super.onCreate(savedInstanceState);
     }
     private class FetchBitmap extends AsyncTask<Void,Void,Bitmap>{
-        private ImageView mV;
+        private ImageView mV;  
         private String    mStrUrl;
         private DataType.SearchResultItem mItem;
         FetchBitmap(ImageView view, String strUrl, DataType.SearchResultItem item){
@@ -81,6 +81,7 @@ public class SearchResultFragment extends Fragment{
         }
         @Override
         protected void onPostExecute(Bitmap bitmap){
+            mItem.isLoading = false;
             if(bitmap == null){
                 return ;
             }
@@ -126,6 +127,9 @@ public class SearchResultFragment extends Fragment{
             if(item.Cover != null){
                 holder.pCoverView.setImageBitmap(item.Cover);
             }else {
+                if (item.isLoading)
+                    return;
+                item.isLoading = true;
                 new FetchBitmap(holder.pCoverView, item.CoverUrl,item).execute();
             }
         }

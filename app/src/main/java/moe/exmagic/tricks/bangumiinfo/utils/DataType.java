@@ -20,5 +20,6 @@ public class DataType {
         public String  DetailUrl;
         public String  CoverUrl;
         public Bitmap  Cover;
+        public boolean isLoading = false;
     }
 }
