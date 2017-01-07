@@ -47,11 +47,12 @@ public class WebSpider {
         public String searchtype = "0";
         public String keyword = "";
         public WebSpider parent = null;
+        public Fragment fm;
         public SearchResult getNext(){
             if (this.currentpage == this.maxpage) {
                 return null;
             }
-            return this.parent.searchItem(this.keyword, this.searchtype, this.currentpage+1);
+            return this.parent.searchItem(this.keyword, this.searchtype, this.currentpage+1,fm);
         }
         public ArrayList<DataType.SearchResultItem> result = new ArrayList<>();
     }
@@ -74,20 +75,25 @@ public class WebSpider {
         private WebSpider   mParent;
         private int         mCurrentPage;
         private String      mSearchType;
-        public FetchHttp(WebSpider parent, int currentPage, String searchType){
+        private Fragment    mFm;
+        public FetchHttp(WebSpider parent, int currentPage, String searchType,Fragment fm){
             this.mParent = parent;
             this.mCurrentPage = currentPage;
             this.mSearchType = searchType;
+            this.mFm = fm;
         }
         @Override
         protected Void doInBackground(Void... v){
             try {
+                if(mParent.getCookies() == null){
+                    mParent.setCookies(Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute().cookies());
+                    if(mParent.getCookies() == null)
+                        return null;
+                }
                 mParent.HttpDocument = Jsoup.connect(mParent.TargetUrl)
                         .cookies(mParent.getCookies())
                         .timeout(3000)
                         .get();
-                Log.d("tRGETURL:",mParent.TargetUrl);
-                Log.d("DOCUMENT:",mParent.HttpDocument.html());
             }catch (IOException e){
                 mParent.setError(e.toString());
                 mParent.unlock();
@@ -99,13 +105,14 @@ public class WebSpider {
         }
         @Override
         protected void onPostExecute(Void v){
-            SearchResultFragment fm = (SearchResultFragment)this.mParent.parent;
             WebSpider.SearchResult result = WebSpider.parseDOMResult(this.mParent.HttpDocument,mCurrentPage,mSearchType,this.mParent.keyWord);
-            result.parent = this.mParent;
+            if(result != null)
+                result.parent = this.mParent;
+            result.fm = mFm;
             if(mCurrentPage == 1)
-                fm.updateUI(result);
+                ((SearchResultFragment)mFm).updateUI(result);
             else
-                fm.appendUI(result);
+                ((SearchResultFragment)mFm).appendUI(result);
 
         }
     }
@@ -113,11 +120,12 @@ public class WebSpider {
     private int syn_lock = 0;
     public boolean lock(){
         while(this.syn_lock == 1){
-            try{
+            return false;
+            /*try{      // 阻塞
                 Thread.sleep(100);
             }catch(InterruptedException e){
                 return false;
-            }
+            }*/
         }
         this.syn_lock = 1;
         return true;
@@ -139,7 +147,7 @@ public class WebSpider {
         this.SearchItem("Heart",WebSpider.SEARCH_ALL,0);*/
         // test CODE END
     }
-    public Document FetchHTTPResult(String keyWords,String type, int page){
+    public Document FetchHTTPResult(String keyWords,String type, int page,Fragment fm){
         String targetUrl;
         targetUrl = BASE_SITE + "subject_search/" + WebSpider.StringFilter(keyWords) + "?cat=" + type;
         this.keyWord = keyWords;
@@ -150,7 +158,7 @@ public class WebSpider {
         Log.d("TargetUrl",targetUrl);
         if (!this.lock())
             return null;
-        new FetchHttp(this,page,type).execute();
+        new FetchHttp(this,page,type,fm).execute();
         return null;
     }
     public void setCookies(Map<String,String> cookies){
@@ -222,8 +230,8 @@ public class WebSpider {
         }
         return result;
     }
-    public SearchResult searchItem(String keyWords, String type, int page){
-        return WebSpider.parseDOMResult(this.FetchHTTPResult(keyWords,type,page),page,type,this.keyWord);
+    public SearchResult searchItem(String keyWords, String type, int page,Fragment fm){
+        return WebSpider.parseDOMResult(this.FetchHTTPResult(keyWords,type,page,fm),page,type,this.keyWord);
     }
     private static WebSpider sWebSpider;
     public static WebSpider get(Context context){
@@ -240,6 +248,23 @@ public class WebSpider {
         Pattern p   =   Pattern.compile(regEx);
         Matcher m   =   p.matcher(str);
         return   m.replaceAll("+").trim();
+    }
+    public static String getStrType(int type){
+        String strType = "" + type;
+        if(strType.equals(WebSpider.SEARCH_BANGUMI)){
+            return "动画";
+        } else if(strType.equals(WebSpider.SEARCH_3DIM)){
+            return "三次元";
+        } else if(strType.equals(WebSpider.SEARCH_BOOK)){
+            return "书籍";
+        } else if(strType.equals(WebSpider.SEARCH_GAME)){
+            return "游戏";
+        } else if(strType.equals(WebSpider.SEARCH_MUSIC)){
+            return "音乐";
+        } else if(strType.equals(WebSpider.SEARCH_PERSON)){     // BUG
+            return "人物";
+        }
+        return "";
     }
 }
 

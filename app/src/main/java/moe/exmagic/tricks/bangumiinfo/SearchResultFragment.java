@@ -9,11 +9,13 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,17 +37,40 @@ public class SearchResultFragment extends Fragment{
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView.LayoutManager mLayoutManager;
     private scrollListener mScrollListener;
+    private String mSearchType;
+    private String mTitle = "";
+    public SearchResultFragment setSearchType(String searchType){
+        mSearchType = searchType;
+        if(!searchType.equals("all")) {
+            mTitle = WebSpider.getStrType(Integer.parseInt(searchType));
+        } else {
+            mTitle = "综合";
+        }
+        return this;
+    }
+    public String getTitle(){
+        return mTitle;
+    }
     public void updateUI(WebSpider.SearchResult result){
-        if(result == null)
+        mSwipeRefreshLayout.setRefreshing(false);
+        if(result == null) {
+            Toast toast = Toast.makeText(getActivity(),"没有更多内容",Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER,0,0);
+            toast.show();
             return;
+        }
         mAdapter = new ItemsAdapter(result);
         mItemListView.setAdapter(mAdapter);
         mSwipeRefreshLayout.setRefreshing(false);
     }
     public void appendUI(WebSpider.SearchResult result){
-        if(result == null)
+        mSwipeRefreshLayout.setRefreshing(false);
+        if(result == null) {
+            Toast toast = Toast.makeText(getActivity(),"没有更多内容",Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER,0,0);
+            toast.show();
             return;
-
+        }
         View topView = mLayoutManager.getChildAt(0);          //获取可视的第一个view
         int lastOffset = topView.getTop();                                   //获取与该view的顶部的偏移量
         int lastPosition = mLayoutManager.getPosition(topView);  //得到该View的数组位置
@@ -55,14 +80,11 @@ public class SearchResultFragment extends Fragment{
         mItemListView.setAdapter(mAdapter);
 
         ((LinearLayoutManager)mLayoutManager).scrollToPositionWithOffset(lastPosition, lastOffset);
-
-        mSwipeRefreshLayout.setRefreshing(false);
     }
     public void search(String keyWord){
         this.mSearchKeyWord = keyWord;
         WebSpider spider = WebSpider.get(getActivity());
-        WebSpider.SearchResult result = spider.searchItem(mSearchKeyWord,WebSpider.SEARCH_ALL,1);
-        this.updateUI(result);
+        spider.searchItem(mSearchKeyWord,mSearchType,1,this);
         mSwipeRefreshLayout.setRefreshing(true);
     }
     @Override
@@ -74,6 +96,8 @@ public class SearchResultFragment extends Fragment{
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             super.onScrollStateChanged(recyclerView, newState);
+            if(mAdapter == null)
+                return;
             if (newState == RecyclerView.SCROLL_STATE_IDLE
                     && lastVisibleItem + 1 == mAdapter.getItemCount()) {
                 mSwipeRefreshLayout.setRefreshing(true);
@@ -132,12 +156,14 @@ public class SearchResultFragment extends Fragment{
         public TextView pOriginalTitleView;
         public TextView pRankView;
         public ImageView pCoverView;
+        public TextView pItemTypeView;
         public ItemsHolder(View itemView){
             super(itemView);
             pTitleView = (TextView) itemView.findViewById(R.id.textViewTitle);
             pOriginalTitleView = (TextView) itemView.findViewById(R.id.textViewOriginalTitle);
             pRankView = (TextView) itemView.findViewById(R.id.textRankInfoView);
             pCoverView = (ImageView) itemView.findViewById(R.id.coverView);
+            pItemTypeView = (TextView) itemView.findViewById(R.id.textItemTypeView);
             itemView.setClickable(true);
             itemView.setBackgroundResource(R.drawable.rect_gray);
         }
@@ -166,10 +192,18 @@ public class SearchResultFragment extends Fragment{
             DataType.SearchResultItem item = mResults.result.get(position);
             holder.pTitleView.setText(item.Title);
             holder.pOriginalTitleView.setText(item.OriginalTitle);
-            if(item.Score != 0)
-                holder.pRankView.setText("RANK:" + item.Rank + "  SCORE:" + item.Score);
-            else
-                holder.pRankView.setText("No Rank Information");
+            holder.pItemTypeView.setText("（" + WebSpider.getStrType(item.ItemType) + "）");
+            String tmpRankInfo = "";
+            if(item.Rank != 0){
+                tmpRankInfo = tmpRankInfo + "RANK:" + item.Rank;
+            }
+            if(item.Score != 0) {
+                tmpRankInfo = tmpRankInfo + "  SCORE:" + item.Score;
+            }
+            if(tmpRankInfo.equals("")) {
+                tmpRankInfo = "No Rank Information";
+            }
+            holder.pRankView.setText(tmpRankInfo);
             if(item.Cover != null){
                 holder.pCoverView.setImageBitmap(item.Cover);
             }else if(item.CoverUrl.equals("")){
@@ -193,11 +227,12 @@ public class SearchResultFragment extends Fragment{
         mLayoutManager = new LinearLayoutManager(getActivity());
         mItemListView.setLayoutManager(mLayoutManager);
         mSwipeRefreshLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipeRefreshLayout);
+        final Fragment tmp = this;
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 if(!mSearchKeyWord.equals(""))
-                    updateUI(WebSpider.get(getActivity()).searchItem(mSearchKeyWord,WebSpider.SEARCH_ALL,1));
+                    WebSpider.get(getActivity()).searchItem(mSearchKeyWord,mSearchType,1,tmp);
                 else
                     mSwipeRefreshLayout.setRefreshing(false);
             }

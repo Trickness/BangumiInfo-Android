@@ -28,4 +28,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile files('libs/jsoup-1.10.2.jar')
     compile 'com.android.support:recyclerview-v7:25.1.0'
+    compile 'com.astuetz:pagerslidingtabstrip:1.0.1'
 }

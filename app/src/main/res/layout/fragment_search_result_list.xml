@@ -3,7 +3,7 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
     <view
-        android:layout_marginTop="34dp"
+        android:layout_marginTop="45dp"
         android:id="@+id/swipeRefreshLayout"
         class="android.support.v4.widget.SwipeRefreshLayout"
         android:layout_width="match_parent"
@@ -13,6 +13,5 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="8dp"/>
-
     </view>
 </LinearLayout>

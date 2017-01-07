@@ -37,11 +37,18 @@
             android:textStyle="bold" />
         <TextView
             android:id="@+id/textViewOriginalTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
 
     </LinearLayout>
+    <TextView
+        android:id="@+id/textItemTypeView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="96dp"
+        android:layout_marginLeft="96dp"
+        android:layout_marginStart="96dp" />
     <TextView
         android:layout_marginTop="96dp"
         android:layout_width="match_parent"
