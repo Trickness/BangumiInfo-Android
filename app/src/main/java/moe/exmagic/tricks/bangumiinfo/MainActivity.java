@@ -1,21 +1,16 @@
 package moe.exmagic.tricks.bangumiinfo;
 
 
-import android.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.View;
 
 
 import com.astuetz.PagerSlidingTabStrip;
@@ -26,6 +21,7 @@ import java.util.List;
 import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
 
 public class MainActivity extends AppCompatActivity implements  SearchView.OnQueryTextListener{
+    private String mCurrentSearchKeyWord = "";
     private ViewPager mPager;
     private PagerSlidingTabStrip mTabs;
     private myFragmentPagerAdapter mPagerAdapter;
@@ -33,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements  SearchView.OnQue
     private Fragment mFragmentSearchBangumi;
     private Fragment mFragmentSearchGame;
     private Fragment mFragmentSearchMusic;
+    private Fragment mFragmentSearchBook;
     private class myFragmentPagerAdapter extends  FragmentPagerAdapter{
         private List<Fragment> mViewList;
         public myFragmentPagerAdapter(FragmentManager fm){
@@ -66,13 +63,14 @@ public class MainActivity extends AppCompatActivity implements  SearchView.OnQue
         mFragmentSearchBangumi = new SearchResultFragment().setSearchType(WebSpider.SEARCH_BANGUMI);
         mFragmentSearchGame = new SearchResultFragment().setSearchType(WebSpider.SEARCH_GAME);
         mFragmentSearchMusic = new SearchResultFragment().setSearchType(WebSpider.SEARCH_MUSIC);
+        mFragmentSearchBook = new SearchResultFragment().setSearchType(WebSpider.SEARCH_BOOK);
 
         final List<Fragment> viewList = new ArrayList<>();
         viewList.add(mFragmentSearchAll);
         viewList.add(mFragmentSearchBangumi);
         viewList.add(mFragmentSearchGame);
+        viewList.add(mFragmentSearchBook);
         viewList.add(mFragmentSearchMusic);
-
 
         // PagerAdapter
         mPagerAdapter = new myFragmentPagerAdapter(getSupportFragmentManager());
@@ -81,6 +79,27 @@ public class MainActivity extends AppCompatActivity implements  SearchView.OnQue
         final int pageMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources()
                 .getDisplayMetrics());
         mPager.setPageMargin(pageMargin);
+        mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            private int mLastState;
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if(mLastState == 2){
+                    SearchResultFragment fm = (SearchResultFragment)mPagerAdapter.getItem(position);
+                    if(!fm.getKeyWord().equals(mCurrentSearchKeyWord)){
+                        fm.search(mCurrentSearchKeyWord);
+                    }
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                mLastState = state;
+            }
+        });
         mTabs.setViewPager(mPager);
 
     }
@@ -91,9 +110,11 @@ public class MainActivity extends AppCompatActivity implements  SearchView.OnQue
     // 单击搜索按钮时激发该方法
     @Override
     public boolean onQueryTextSubmit(String query) {
-        // 实际应用中应该在该方法内执行实际查询
-        // 此处仅使用Toast显示用户输入的查询内容
+        if(query.equals("")){
+            return false;
+        }
         SearchResultFragment fm = (SearchResultFragment) mPagerAdapter.getItem(mPager.getCurrentItem());
+        mCurrentSearchKeyWord = query;
         fm.search(query);
         return true;
     }

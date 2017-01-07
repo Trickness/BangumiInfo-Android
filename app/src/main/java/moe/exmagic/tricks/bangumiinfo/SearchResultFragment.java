@@ -17,11 +17,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import moe.exmagic.tricks.bangumiinfo.utils.DataType;
 import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
@@ -31,6 +36,7 @@ import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
  */
 
 public class SearchResultFragment extends Fragment{
+    private WebSpider.SearchResult mResult;
     private RecyclerView mItemListView;
     private ItemsAdapter mAdapter;
     private String mSearchKeyWord = "";
@@ -39,12 +45,75 @@ public class SearchResultFragment extends Fragment{
     private scrollListener mScrollListener;
     private String mSearchType;
     private String mTitle = "";
+    private View mFragmentView;
+
+    private static String KEY_SEARCH_RESULT = "moe.exmagic.searchResult";
+
+    private Bundle savedState;
+    private class storeState{
+        public String   searchType;
+        public int      maxPage;
+        public int      currentPage;
+        public String   keyWord;
+        ArrayList<DataType.SearchResultItem> results;
+    }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if(mFragmentView != null){
+            ((ViewGroup) mFragmentView.getParent()).removeView(mFragmentView);
+        }
+    }
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState){
+        super.onSaveInstanceState(savedInstanceState);
+        if(mResult == null)
+            return ;
+        Gson g = new Gson();
+
+        storeState state = new storeState();
+        state.searchType = mSearchType;
+        state.maxPage = mResult.maxpage;
+        state.currentPage = mResult.currentpage;
+        state.keyWord = mSearchKeyWord;
+        state.results = mResult.result;
+
+        String s = g.toJson(state);
+        savedInstanceState.putString(KEY_SEARCH_RESULT,s);
+    }
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        restoreState(savedInstanceState);
+    }
+
+    protected boolean restoreState(Bundle savedInstanceState){
+        if(savedInstanceState == null)
+            return false;
+        String s =savedInstanceState.getString(KEY_SEARCH_RESULT);
+        if(s != null) {
+            storeState state = new Gson().fromJson(s,storeState.class);
+            this.mResult = new WebSpider.SearchResult();
+            this.mResult.result = state.results;
+            this.mSearchKeyWord = state.searchType;
+            this.mResult.maxpage = state.maxPage;
+            this.mResult.currentpage = state.currentPage;
+            this.mSearchType = state.searchType;
+            this.updateUI(this.mResult);
+        }
+        return true;
+    }
+    public String getKeyWord(){
+        return mSearchKeyWord;
+    }
     public SearchResultFragment setSearchType(String searchType){
         mSearchType = searchType;
-        if(!searchType.equals("all")) {
-            mTitle = WebSpider.getStrType(Integer.parseInt(searchType));
-        } else {
+        if(searchType.equals("all")) {
             mTitle = "综合";
+        } else if(searchType.equals("person")) {
+            mTitle = "人物";
+        } else {
+            mTitle = WebSpider.getStrType(Integer.parseInt(searchType));
         }
         return this;
     }
@@ -59,6 +128,7 @@ public class SearchResultFragment extends Fragment{
             toast.show();
             return;
         }
+        mResult = result;
         mAdapter = new ItemsAdapter(result);
         mItemListView.setAdapter(mAdapter);
         mSwipeRefreshLayout.setRefreshing(false);
@@ -80,12 +150,14 @@ public class SearchResultFragment extends Fragment{
         mItemListView.setAdapter(mAdapter);
 
         ((LinearLayoutManager)mLayoutManager).scrollToPositionWithOffset(lastPosition, lastOffset);
+
+        mResult = result;
     }
     public void search(String keyWord){
         this.mSearchKeyWord = keyWord;
         WebSpider spider = WebSpider.get(getActivity());
         spider.searchItem(mSearchKeyWord,mSearchType,1,this);
-        mSwipeRefreshLayout.setRefreshing(true);
+        ((SwipeRefreshLayout)mFragmentView.findViewById(R.id.swipeRefreshLayout)).setRefreshing(true);
     }
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -222,6 +294,9 @@ public class SearchResultFragment extends Fragment{
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
+        Log.d("BangumiInfo","Created:"+mSearchType);
+        if(mFragmentView != null)
+            return mFragmentView;
         View v = inflater.inflate(R.layout.fragment_search_result_list,container,false);
         mItemListView = (RecyclerView) v.findViewById(R.id.placeholder_rv_recycler);
         mLayoutManager = new LinearLayoutManager(getActivity());
@@ -240,6 +315,7 @@ public class SearchResultFragment extends Fragment{
 
         mScrollListener = new scrollListener();
         mItemListView.setOnScrollListener(mScrollListener);
+        mFragmentView = v;
         return v;
     }
 }
