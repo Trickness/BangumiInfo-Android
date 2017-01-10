@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="8dp"
-    android:layout_marginStart="12dp"
-    android:layout_marginEnd="12dp">
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:scrollbars="vertical"    >
 
-    <ScrollView
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp">
+
+
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -18,36 +23,33 @@
 
             <ImageView
                 android:layout_width="80dp"
-                android:layout_height="110dp" />
+                android:layout_height="110dp"
+                android:id="@+id/CoverImage" />
 
             <TextView
                 android:text="TextView"
                 android:layout_width="60dp"
                 android:layout_height="wrap_content"
-                android:id="@+id/textView12"
+                android:id="@+id/Score"
                 android:gravity="center"
                 android:layout_marginLeft="10dp"
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="110dp"
-                tools:text="8.8 分"
-                android:layout_alignBottom="@+id/linearLayout2"
- />
+                tools:text="8.8 分" />
 
             <LinearLayout
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginStart="92dp"
-                android:layout_alignParentTop="true"
-                android:layout_toRightOf="@+id/imageView4"
-                android:layout_toEndOf="@+id/imageView4">
+                android:layout_marginLeft="92dp"
+                android:layout_alignParentTop="true">
 
                 <TextView
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="16sp"
-                    android:id="@+id/textView"
+                    android:id="@+id/ChineseName"
                     tools:text="中文名:" />
 
                 <TextView
@@ -55,7 +57,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="16sp"
-                    android:id="@+id/textView2"
+                    android:id="@+id/DevelopersName"
                     tools:text="开发:" />
 
                 <TextView
@@ -63,14 +65,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="16sp"
-                    android:id="@+id/textView3"
+                    android:id="@+id/Scripters"
                     tools:text="剧本:" />
 
                 <TextView
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textView4"
+                    android:id="@+id/Platforms"
                     android:textSize="16sp"
                     tools:text="平台:" />
 
@@ -78,7 +80,7 @@
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textView5"
+                    android:id="@+id/GameType"
                     android:textSize="16sp"
                     tools:text="游戏类型:" />
 
@@ -87,7 +89,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="16sp"
-                    android:id="@+id/textView10"
+                    android:id="@+id/IssueDate"
                     tools:text="发行日期:" />
 
                 <TextView
@@ -95,7 +97,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="16sp"
-                    android:id="@+id/textView11"
+                    android:id="@+id/Music"
                     tools:text="音乐:" />
 
             </LinearLayout>
@@ -104,7 +106,7 @@
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="150"
+                android:layout_marginTop="150dp"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true">
 
@@ -112,53 +114,54 @@
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textView13"
+                    android:id="@+id/OtherName"
                     tools:text="别名：" />
 
                 <TextView
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textView14"
+                    android:id="@+id/ThemeSongComposer"
                     tools:text="主题歌作曲：" />
 
                 <TextView
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textView15"
+                    android:id="@+id/ThemeSongPerformance"
                     tools:text="主题歌演出：" />
 
                 <TextView
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textView16"
+                    android:id="@+id/OriginalPainting"
                     tools:text="原画：" />
 
                 <TextView
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textView17"
+                    android:id="@+id/SellingPrice"
                     tools:text="售价：" />
 
                 <TextView
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textView18"
+                    android:id="@+id/OfficialWebsite"
                     tools:text="官方网站" />
 
                 <TextView
                     android:text="TextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/textView20"
+                    android:id="@+id/Synopsis"
                     tools:text="简介：" />
             </LinearLayout>
 
         </RelativeLayout>
-    </ScrollView>
 
-</LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
