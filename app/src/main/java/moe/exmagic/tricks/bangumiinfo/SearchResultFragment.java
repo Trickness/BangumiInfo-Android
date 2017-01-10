@@ -12,17 +12,16 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -35,7 +34,7 @@ import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
  * Created by tricks on 17-1-5.
  */
 
-public class SearchResultFragment extends Fragment{
+public class SearchResultFragment extends Fragment {
     private WebSpider.SearchResult mResult;
     private RecyclerView mItemListView;
     private ItemsAdapter mAdapter;
@@ -46,6 +45,7 @@ public class SearchResultFragment extends Fragment{
     private String mSearchType;
     private String mTitle = "";
     private View mFragmentView;
+    private MainActivity mParent;
 
     private static String KEY_SEARCH_RESULT = "moe.exmagic.searchResult";
 
@@ -86,7 +86,6 @@ public class SearchResultFragment extends Fragment{
         super.onActivityCreated(savedInstanceState);
         restoreState(savedInstanceState);
     }
-
     protected boolean restoreState(Bundle savedInstanceState){
         if(savedInstanceState == null)
             return false;
@@ -102,6 +101,10 @@ public class SearchResultFragment extends Fragment{
             this.updateUI(this.mResult);
         }
         return true;
+    }
+    public void setParent(MainActivity activity){
+        this.mParent = activity;
+        Log.d("BangumiInfo","PARENT");
     }
     public String getKeyWord(){
         return mSearchKeyWord;
@@ -130,6 +133,7 @@ public class SearchResultFragment extends Fragment{
         }
         mResult = result;
         mAdapter = new ItemsAdapter(result);
+        mAdapter.setParent(this);
         mItemListView.setAdapter(mAdapter);
         mSwipeRefreshLayout.setRefreshing(false);
     }
@@ -223,12 +227,13 @@ public class SearchResultFragment extends Fragment{
             mItem.Cover = bitmap;
         }
     }
-    private class ItemsHolder extends RecyclerView.ViewHolder{
+    private class ItemsHolder extends RecyclerView.ViewHolder implements OnClickListener{
         public TextView pTitleView;
         public TextView pOriginalTitleView;
         public TextView pRankView;
         public ImageView pCoverView;
         public TextView pItemTypeView;
+        private ItemsAdapter mParent;
         public ItemsHolder(View itemView){
             super(itemView);
             pTitleView = (TextView) itemView.findViewById(R.id.textViewTitle);
@@ -238,15 +243,29 @@ public class SearchResultFragment extends Fragment{
             pItemTypeView = (TextView) itemView.findViewById(R.id.textItemTypeView);
             itemView.setClickable(true);
             itemView.setBackgroundResource(R.drawable.rect_gray);
+            itemView.setOnClickListener(this);
+        }
+        public void setParent(ItemsAdapter adapter){
+            mParent = adapter;
+        }
+
+        @Override
+        public void onClick(View v) {
+            Log.d("BangumiInfo","ONCLICK");
+            this.mParent.onClick(this.getAdapterPosition());
         }
     }
-    private class ItemsAdapter extends RecyclerView.Adapter<ItemsHolder> {
+    private class ItemsAdapter extends RecyclerView.Adapter<ItemsHolder>{
         private WebSpider.SearchResult mResults;
+        private SearchResultFragment mParent;
         public WebSpider.SearchResult getListData(){
             return mResults;
         }
         public ItemsAdapter(WebSpider.SearchResult results){
             mResults = results;
+        }
+        public void setParent(SearchResultFragment parent){
+            mParent = parent;
         }
         @Override
         public ItemsHolder onCreateViewHolder(ViewGroup parent, int viewType){
@@ -286,11 +305,18 @@ public class SearchResultFragment extends Fragment{
                 item.isLoading = true;
                 new FetchBitmap(holder.pCoverView, item.CoverUrl,item).execute();
             }
+            holder.setParent(this);
         }
-
         public void updateListData(WebSpider.SearchResult result){
             this.mResults = result;
         }
+        public void onClick(int position){
+            DataType.SearchResultItem item = mResults.result.get(position);
+            mParent.onClick(item);
+        }
+    }
+    public void onClick(DataType.SearchResultItem item){
+        this.mParent.addFragment();
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){

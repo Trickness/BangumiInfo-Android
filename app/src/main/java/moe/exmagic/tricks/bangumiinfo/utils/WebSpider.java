@@ -34,6 +34,12 @@ public class WebSpider {
     public static String BASE_SITE         = "http://bangumi.tv/";
     public static String USER_AGENT        = "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0\\r\\n";
 
+    public static int ITEM_TYPE_BANGUMI = 1;
+    public static int ITEM_TYPE_BOOK = 2;
+    public static int ITEM_TYPE_MUSIC = 3;
+    public static int ITEM_TYPE_GAME = 4;
+    public static int ITEM_TYPE_3DIM = 6;
+
     private Map<String,String> Cookies = null;
     public String   error           = "";
     public String   keyWord         = "";
