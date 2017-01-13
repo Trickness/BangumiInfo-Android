@@ -20,7 +20,8 @@ import java.util.regex.Pattern;
 import moe.exmagic.tricks.bangumiinfo.SearchResultFragment;
 
 /**
- * Created by tricks on 17-1-4.
+ * Created by SternWZhang on 17-1-4.
+ * WebSpider
  */
 
 public class WebSpider {
@@ -45,21 +46,12 @@ public class WebSpider {
     public String   keyWord         = "";
     private String  TargetUrl       = "";
     private Document             HttpDocument = null;
-    public Fragment parent;
 
     public static class SearchResult{
-        public int maxpage = 0;
-        public int currentpage = 0;
-        public String searchtype = "0";
-        public String keyword = "";
-        public WebSpider parent = null;
-        public Fragment fm;
-        public SearchResult getNext(){
-            if (this.currentpage == this.maxpage) {
-                return null;
-            }
-            return this.parent.searchItem(this.keyword, this.searchtype, this.currentpage+1,fm);
-        }
+        public int maxPage = 0;
+        public int currentPage = 0;
+        public String searchType = "0";
+        public String keyWord = "";
         public ArrayList<DataType.SearchResultItem> result = new ArrayList<>();
     }
     private class FetchResponse extends AsyncTask<WebSpider,Void,Void> {
@@ -111,20 +103,16 @@ public class WebSpider {
         }
         @Override
         protected void onPostExecute(Void v){
-            WebSpider.SearchResult result = WebSpider.parseDOMResult(this.mParent.HttpDocument,mCurrentPage,mSearchType,this.mParent.keyWord);
-            if(result != null)
-                result.parent = this.mParent;
-            result.fm = mFm;
+            WebSpider.SearchResult result = parseDOMResult(this.mParent.HttpDocument,mCurrentPage,mSearchType,this.mParent.keyWord);
             if(mCurrentPage == 1)
                 ((SearchResultFragment)mFm).updateUI(result);
             else
                 ((SearchResultFragment)mFm).appendUI(result);
-
         }
     }
 
     private int syn_lock = 0;
-    public boolean lock(){
+    private boolean lock(){
         while(this.syn_lock == 1){
             return false;
             /*try{      // 阻塞
@@ -136,24 +124,14 @@ public class WebSpider {
         this.syn_lock = 1;
         return true;
     }
-    public void unlock(){
+    private void unlock(){
         this.syn_lock = 0;
     }
 
-    private WebSpider(Context context) {     // initlized
+    private WebSpider(Context context) {
         new FetchResponse().execute(this);
-        // test CODE START
-        /*while(this.Cookies == null){
-            try {
-                Thread.sleep(1000);
-            }catch (InterruptedException e){
-                return ;
-            }
-        }
-        this.SearchItem("Heart",WebSpider.SEARCH_ALL,0);*/
-        // test CODE END
     }
-    public Document FetchHTTPResult(String keyWords,String type, int page,Fragment fm){
+    private Document FetchHTTPResult(String keyWords,String type, int page,Fragment fm){
         String targetUrl;
         targetUrl = BASE_SITE + "subject_search/" + WebSpider.StringFilter(keyWords) + "?cat=" + type;
         this.keyWord = keyWords;
@@ -167,27 +145,27 @@ public class WebSpider {
         new FetchHttp(this,page,type,fm).execute();
         return null;
     }
-    public void setCookies(Map<String,String> cookies){
+    private void setCookies(Map<String,String> cookies){
         this.Cookies = cookies;
     }
-    public void setError(String error){
+    private void setError(String error){
         this.error = error;
     }
-    public Map<String,String> getCookies(){
+    private Map<String,String> getCookies(){
         return  this.Cookies;
     }
-    public static WebSpider.SearchResult parseDOMResult(Document HttpDocument,int currentPage, String searchType, String keyWords){
+    private WebSpider.SearchResult parseDOMResult(Document HttpDocument,int currentPage, String searchType, String keyWords){
         if(HttpDocument == null){
             return null;
         }
         Elements Items = HttpDocument.getElementsByClass("item");
         WebSpider.SearchResult result = new WebSpider.SearchResult();
-        DataType.SearchResultItem resultItem = null;
+        DataType.SearchResultItem resultItem;
 
-        result.currentpage = currentPage;
-        result.maxpage = 0;     // !!!
-        result.searchtype = searchType;
-        result.keyword = keyWords;
+        result.currentPage = currentPage;
+        result.maxPage = 0;     // !!!
+        result.searchType = searchType;
+        result.keyWord = keyWords;
 
         for (Element Item : Items){
             resultItem = new DataType.SearchResultItem();
@@ -230,14 +208,14 @@ public class WebSpider {
         if(HttpDocument.getElementById("multipage") != null && HttpDocument.getElementById("multipage").getElementsByClass("p").last() != null){
             String tmpUrl = HttpDocument.getElementById("multipage").getElementsByClass("p").last().attr("href");
             String[] tmpStrs = tmpUrl.split("=");
-            result.maxpage = Integer.parseInt(tmpStrs[tmpStrs.length-1]);
+            result.maxPage = Integer.parseInt(tmpStrs[tmpStrs.length-1]);
         }else{
-            result.maxpage = 10;
+            result.maxPage = 10;
         }
         return result;
     }
     public SearchResult searchItem(String keyWords, String type, int page,Fragment fm){
-        return WebSpider.parseDOMResult(this.FetchHTTPResult(keyWords,type,page,fm),page,type,this.keyWord);
+        return parseDOMResult(this.FetchHTTPResult(keyWords,type,page,fm),page,type,this.keyWord);
     }
     private static WebSpider sWebSpider;
     public static WebSpider get(Context context){
@@ -246,7 +224,7 @@ public class WebSpider {
         }
         return sWebSpider;
     }
-    public   static   String StringFilter(String   str){
+    public static String StringFilter(String   str){
         // 只允许字母和数字
         // String   regEx  =  "[^a-zA-Z0-9]";
         // 清除掉所有特殊字符

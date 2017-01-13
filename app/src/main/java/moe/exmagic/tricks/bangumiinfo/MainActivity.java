@@ -1,20 +1,17 @@
 package moe.exmagic.tricks.bangumiinfo;
 
 
-
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.SearchView;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
-import android.widget.LinearLayout;
 
 import com.astuetz.PagerSlidingTabStrip;
 
@@ -33,7 +30,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private Fragment mFragmentSearchGame;
     private Fragment mFragmentSearchMusic;
     private Fragment mFragmentSearchBook;
-    private LinearLayout mSlideUpContainer;
 
     @Override
     public void onClick(View v) {
@@ -69,20 +65,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         setContentView(R.layout.activity_main);
         mPager = (ViewPager) findViewById(R.id.pager);
         mTabs = (PagerSlidingTabStrip) findViewById(R.id.tabs);
-        //mSlideUpContainer = (LinearLayout) findViewById(R.id.slideup_container);
 
-        mFragmentSearchAll = new SearchResultFragment().setSearchType(WebSpider.SEARCH_ALL);
-        mFragmentSearchBangumi = new SearchResultFragment().setSearchType(WebSpider.SEARCH_BANGUMI);
-        mFragmentSearchGame = new SearchResultFragment().setSearchType(WebSpider.SEARCH_GAME);
-        mFragmentSearchMusic = new SearchResultFragment().setSearchType(WebSpider.SEARCH_MUSIC);
-        mFragmentSearchBook = new SearchResultFragment().setSearchType(WebSpider.SEARCH_BOOK);
-
-        ((SearchResultFragment)mFragmentSearchAll).setParent(this);
-        ((SearchResultFragment)mFragmentSearchBangumi).setParent(this);
-        ((SearchResultFragment)mFragmentSearchGame).setParent(this);
-        ((SearchResultFragment)mFragmentSearchMusic).setParent(this);
-        ((SearchResultFragment)mFragmentSearchBook).setParent(this);
-
+        mFragmentSearchAll      = new SearchResultFragment().setSearchType(WebSpider.SEARCH_ALL);
+        mFragmentSearchBangumi  = new SearchResultFragment().setSearchType(WebSpider.SEARCH_BANGUMI);
+        mFragmentSearchGame     = new SearchResultFragment().setSearchType(WebSpider.SEARCH_GAME);
+        mFragmentSearchMusic    = new SearchResultFragment().setSearchType(WebSpider.SEARCH_MUSIC);
+        mFragmentSearchBook     = new SearchResultFragment().setSearchType(WebSpider.SEARCH_BOOK);
 
         final List<Fragment> viewList = new ArrayList<>();
         viewList.add(mFragmentSearchAll);

@@ -18,24 +18,22 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 
 import moe.exmagic.tricks.bangumiinfo.utils.DataType;
 import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
 
 /**
- * Created by tricks on 17-1-5.
+ * Created by SternWZhang on 17-1-5.
+ * 搜索结果显示的List页面
  */
 
 public class SearchResultFragment extends Fragment {
-    private WebSpider.SearchResult mResult;
+    private WebSpider.SearchResult mSearchResult;
     private RecyclerView mItemListView;
     private ItemsAdapter mAdapter;
     private String mSearchKeyWord = "";
@@ -45,18 +43,10 @@ public class SearchResultFragment extends Fragment {
     private String mSearchType;
     private String mTitle = "";
     private View mFragmentView;
-    private MainActivity mParent;
+    final Fragment mRootSearchFragment = this;
 
     private static String KEY_SEARCH_RESULT = "moe.exmagic.searchResult";
 
-    private Bundle savedState;
-    private class storeState{
-        public String   searchType;
-        public int      maxPage;
-        public int      currentPage;
-        public String   keyWord;
-        ArrayList<DataType.SearchResultItem> results;
-    }
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -67,44 +57,10 @@ public class SearchResultFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState){
         super.onSaveInstanceState(savedInstanceState);
-        if(mResult == null)
-            return ;
-        Gson g = new Gson();
-
-        storeState state = new storeState();
-        state.searchType = mSearchType;
-        state.maxPage = mResult.maxpage;
-        state.currentPage = mResult.currentpage;
-        state.keyWord = mSearchKeyWord;
-        state.results = mResult.result;
-
-        String s = g.toJson(state);
-        savedInstanceState.putString(KEY_SEARCH_RESULT,s);
     }
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        restoreState(savedInstanceState);
-    }
-    protected boolean restoreState(Bundle savedInstanceState){
-        if(savedInstanceState == null)
-            return false;
-        String s =savedInstanceState.getString(KEY_SEARCH_RESULT);
-        if(s != null) {
-            storeState state = new Gson().fromJson(s,storeState.class);
-            this.mResult = new WebSpider.SearchResult();
-            this.mResult.result = state.results;
-            this.mSearchKeyWord = state.searchType;
-            this.mResult.maxpage = state.maxPage;
-            this.mResult.currentpage = state.currentPage;
-            this.mSearchType = state.searchType;
-            this.updateUI(this.mResult);
-        }
-        return true;
-    }
-    public void setParent(MainActivity activity){
-        this.mParent = activity;
-        Log.d("BangumiInfo","PARENT");
     }
     public String getKeyWord(){
         return mSearchKeyWord;
@@ -113,7 +69,7 @@ public class SearchResultFragment extends Fragment {
         mSearchType = searchType;
         if(searchType.equals("all")) {
             mTitle = "综合";
-        } else if(searchType.equals("person")) {
+        } else if(searchType.equals("person")) {            // BUG
             mTitle = "人物";
         } else {
             mTitle = WebSpider.getStrType(Integer.parseInt(searchType));
@@ -131,15 +87,14 @@ public class SearchResultFragment extends Fragment {
             toast.show();
             return;
         }
-        mResult = result;
+        mSearchResult = result;
         mAdapter = new ItemsAdapter(result);
-        mAdapter.setParent(this);
         mItemListView.setAdapter(mAdapter);
         mSwipeRefreshLayout.setRefreshing(false);
     }
     public void appendUI(WebSpider.SearchResult result){
         mSwipeRefreshLayout.setRefreshing(false);
-        if(result == null) {
+        if(result == null || result.result.size() == 0) {
             Toast toast = Toast.makeText(getActivity(),"没有更多内容",Toast.LENGTH_LONG);
             toast.setGravity(Gravity.CENTER,0,0);
             toast.show();
@@ -149,13 +104,12 @@ public class SearchResultFragment extends Fragment {
         int lastOffset = topView.getTop();                                   //获取与该view的顶部的偏移量
         int lastPosition = mLayoutManager.getPosition(topView);  //得到该View的数组位置
 
-        result.result.addAll(0,mAdapter.getListData().result);
+        result.result.addAll(0,mSearchResult.result);
         this.mAdapter.updateListData(result);
         mItemListView.setAdapter(mAdapter);
-
         ((LinearLayoutManager)mLayoutManager).scrollToPositionWithOffset(lastPosition, lastOffset);
 
-        mResult = result;
+        mSearchResult = result;
     }
     public void search(String keyWord){
         this.mSearchKeyWord = keyWord;
@@ -177,7 +131,7 @@ public class SearchResultFragment extends Fragment {
             if (newState == RecyclerView.SCROLL_STATE_IDLE
                     && lastVisibleItem + 1 == mAdapter.getItemCount()) {
                 mSwipeRefreshLayout.setRefreshing(true);
-                mAdapter.getListData().getNext();   // It will refresh ui
+                WebSpider.get(getActivity()).searchItem(mSearchResult.keyWord,mSearchResult.searchType,mSearchResult.currentPage+1, mRootSearchFragment);
             }
         }
         @Override
@@ -219,7 +173,7 @@ public class SearchResultFragment extends Fragment {
         }
         @Override
         protected void onPostExecute(Bitmap bitmap){
-            mItem.isLoading = false;
+            mItem.isCoverLoading = false;
             if(bitmap == null){
                 return ;
             }
@@ -251,21 +205,13 @@ public class SearchResultFragment extends Fragment {
 
         @Override
         public void onClick(View v) {
-            Log.d("BangumiInfo","ONCLICK");
             this.mParent.onClick(this.getAdapterPosition());
         }
     }
     private class ItemsAdapter extends RecyclerView.Adapter<ItemsHolder>{
         private WebSpider.SearchResult mResults;
-        private SearchResultFragment mParent;
-        public WebSpider.SearchResult getListData(){
-            return mResults;
-        }
-        public ItemsAdapter(WebSpider.SearchResult results){
+        private ItemsAdapter(WebSpider.SearchResult results){
             mResults = results;
-        }
-        public void setParent(SearchResultFragment parent){
-            mParent = parent;
         }
         @Override
         public ItemsHolder onCreateViewHolder(ViewGroup parent, int viewType){
@@ -300,9 +246,9 @@ public class SearchResultFragment extends Fragment {
             }else if(item.CoverUrl.equals("")){
                 return;
             } else {
-                if (item.isLoading)
+                if (item.isCoverLoading)
                     return;
-                item.isLoading = true;
+                item.isCoverLoading = true;
                 new FetchBitmap(holder.pCoverView, item.CoverUrl,item).execute();
             }
             holder.setParent(this);
@@ -310,17 +256,14 @@ public class SearchResultFragment extends Fragment {
         public void updateListData(WebSpider.SearchResult result){
             this.mResults = result;
         }
-        public void onClick(int position){
-            DataType.SearchResultItem item = mResults.result.get(position);
-            mParent.onClick(item);
+        private void onClick(int position){
+            onItemClicked(mResults.result.get(position));
         }
     }
-    public void onClick(DataType.SearchResultItem item){
-        this.mParent.addFragment();
+    public void onItemClicked(DataType.SearchResultItem item){
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
-        Log.d("BangumiInfo","Created:"+mSearchType);
         if(mFragmentView != null)
             return mFragmentView;
         View v = inflater.inflate(R.layout.fragment_search_result_list,container,false);
@@ -328,12 +271,11 @@ public class SearchResultFragment extends Fragment {
         mLayoutManager = new LinearLayoutManager(getActivity());
         mItemListView.setLayoutManager(mLayoutManager);
         mSwipeRefreshLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipeRefreshLayout);
-        final Fragment tmp = this;
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 if(!mSearchKeyWord.equals(""))
-                    WebSpider.get(getActivity()).searchItem(mSearchKeyWord,mSearchType,1,tmp);
+                    WebSpider.get(getActivity()).searchItem(mSearchKeyWord,mSearchType,1, mRootSearchFragment);
                 else
                     mSwipeRefreshLayout.setRefreshing(false);
             }
