@@ -44,85 +44,7 @@ public class SearchResultFragment extends Fragment {
     private View mFragmentView;
     final Fragment mRootSearchFragment = this;
     private MainActivity mMainActivity;
-    public SearchResultFragment setParent(MainActivity parent){
-        mMainActivity = parent;
-        return this;
-    }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if(mFragmentView != null){
-            ((ViewGroup) mFragmentView.getParent()).removeView(mFragmentView);
-        }
-    }
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState){
-        super.onSaveInstanceState(savedInstanceState);
-    }
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-    public String getKeyWord(){
-        return mSearchKeyWord;
-    }
-    public SearchResultFragment setSearchType(String searchType){
-        mSearchType = searchType;
-        if(searchType.equals("all")) {
-            mTitle = "综合";
-        } else if(searchType.equals("person")) {            // BUG
-            mTitle = "人物";
-        } else {
-            mTitle = WebSpider.getStrType(Integer.parseInt(searchType));
-        }
-        return this;
-    }
-    public String getTitle(){
-        return mTitle;
-    }
-    public void updateUI(WebSpider.SearchResult result){
-        mSwipeRefreshLayout.setRefreshing(false);
-        if(result == null) {
-            Toast toast = Toast.makeText(getActivity(),"没有更多内容",Toast.LENGTH_LONG);
-            toast.setGravity(Gravity.CENTER,0,0);
-            toast.show();
-            return;
-        }
-        mSearchResult = result;
-        mAdapter = new ItemsAdapter(result);
-        mItemListView.setAdapter(mAdapter);
-        mSwipeRefreshLayout.setRefreshing(false);
-    }
-    public void appendUI(WebSpider.SearchResult result){
-        mSwipeRefreshLayout.setRefreshing(false);
-        if(result == null || result.result.size() == 0) {
-            Toast toast = Toast.makeText(getActivity(),"没有更多内容",Toast.LENGTH_LONG);
-            toast.setGravity(Gravity.CENTER,0,0);
-            toast.show();
-            return;
-        }
-        View topView = mLayoutManager.getChildAt(0);          //获取可视的第一个view
-        int lastOffset = topView.getTop();                                   //获取与该view的顶部的偏移量
-        int lastPosition = mLayoutManager.getPosition(topView);  //得到该View的数组位置
-
-        result.result.addAll(0,mSearchResult.result);
-        this.mAdapter.updateListData(result);
-        mItemListView.setAdapter(mAdapter);
-        ((LinearLayoutManager)mLayoutManager).scrollToPositionWithOffset(lastPosition, lastOffset);
-
-        mSearchResult = result;
-    }
-    public void search(String keyWord){
-        this.mSearchKeyWord = keyWord;
-        WebSpider spider = WebSpider.get(getActivity());
-        spider.Search(mSearchKeyWord,mSearchType,1,this);
-        ((SwipeRefreshLayout)mFragmentView.findViewById(R.id.swipeRefreshLayout)).setRefreshing(true);
-    }
-    @Override
-    public void onCreate(Bundle savedInstanceState){
-        super.onCreate(savedInstanceState);
-    }
     private class scrollListener extends RecyclerView.OnScrollListener {
         private int lastVisibleItem;
         @Override
@@ -262,8 +184,17 @@ public class SearchResultFragment extends Fragment {
             onItemClicked(mResults.result.get(position));
         }
     }
-    public void onItemClicked(DataType.SearchResultItem item){
-        mMainActivity.launchDetailFragment(item);
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if(mFragmentView != null){
+            ((ViewGroup) mFragmentView.getParent()).removeView(mFragmentView);
+        }
+    }
+    @Override
+    public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -287,5 +218,72 @@ public class SearchResultFragment extends Fragment {
         mItemListView.setOnScrollListener(new scrollListener());
         mFragmentView = v;
         return v;
+    }
+
+    public SearchResultFragment setParent(MainActivity parent){
+        mMainActivity = parent;
+        return this;
+    }
+    public String getKeyWord(){
+        return mSearchKeyWord;
+    }
+    public SearchResultFragment setSearchType(String searchType){
+        mSearchType = searchType;
+        if(searchType.equals("all")) {
+            mTitle = "综合";
+        } else if(searchType.equals("person")) {            // BUG
+            mTitle = "人物";
+        } else {
+            mTitle = WebSpider.getStrType(Integer.parseInt(searchType));
+        }
+        return this;
+    }
+    public String getTitle(){
+        return mTitle;
+    }
+    public void updateUI(WebSpider.SearchResult result){
+        mSwipeRefreshLayout.setRefreshing(false);
+        if(result == null) {
+            Toast toast = Toast.makeText(getActivity(),"没有更多内容",Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER,0,0);
+            toast.show();
+            return;
+        }
+        mSearchResult = result;
+        mAdapter = new ItemsAdapter(result);
+        mItemListView.setAdapter(mAdapter);
+        mSwipeRefreshLayout.setRefreshing(false);
+    }
+    public void appendUI(WebSpider.SearchResult result){
+        mSwipeRefreshLayout.setRefreshing(false);
+        if(result == null || result.result.size() == 0) {
+            Toast toast = Toast.makeText(getActivity(),"没有更多内容",Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER,0,0);
+            toast.show();
+            return;
+        }
+        View topView = mLayoutManager.getChildAt(0);          //获取可视的第一个view
+        int lastOffset = topView.getTop();                                   //获取与该view的顶部的偏移量
+        int lastPosition = mLayoutManager.getPosition(topView);  //得到该View的数组位置
+
+        result.result.addAll(0,mSearchResult.result);
+        this.mAdapter.updateListData(result);
+        mItemListView.setAdapter(mAdapter);
+        ((LinearLayoutManager)mLayoutManager).scrollToPositionWithOffset(lastPosition, lastOffset);
+
+        mSearchResult = result;
+    }
+    public void search(String keyWord){
+        this.mSearchKeyWord = keyWord;
+        WebSpider spider = WebSpider.get(getActivity());
+        spider.Search(mSearchKeyWord,mSearchType,1,this);
+        ((SwipeRefreshLayout)mFragmentView.findViewById(R.id.swipeRefreshLayout)).setRefreshing(true);
+    }
+    public void onItemClicked(DataType.SearchResultItem item){
+        mMainActivity.launchDetailFragment(item);
+    }
+
+    public static SearchResultFragment newInstance(String searchType, MainActivity parent){
+        return new SearchResultFragment().setParent(parent).setSearchType(searchType);
     }
 }

@@ -22,7 +22,8 @@ import java.util.List;
 import moe.exmagic.tricks.bangumiinfo.utils.DataType;
 import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
 
-public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
+public class MainActivity extends AppCompatActivity
+        implements SearchView.OnQueryTextListener, SearchView.OnCloseListener{
     private String mCurrentSearchKeyWord = "";
     private ViewPager mPager;
     private PagerSlidingTabStrip mTabs;
@@ -64,11 +65,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         mPager = (ViewPager) findViewById(R.id.pager);
         mTabs = (PagerSlidingTabStrip) findViewById(R.id.tabs);
 
-        mFragmentSearchAll      = new SearchResultFragment().setSearchType(WebSpider.SEARCH_ALL).setParent(this);
-        mFragmentSearchBangumi  = new SearchResultFragment().setSearchType(WebSpider.SEARCH_BANGUMI).setParent(this);
-        mFragmentSearchGame     = new SearchResultFragment().setSearchType(WebSpider.SEARCH_GAME).setParent(this);
-        mFragmentSearchMusic    = new SearchResultFragment().setSearchType(WebSpider.SEARCH_MUSIC).setParent(this);
-        mFragmentSearchBook     = new SearchResultFragment().setSearchType(WebSpider.SEARCH_BOOK).setParent(this);
+
+        mFragmentSearchAll      = SearchResultFragment.newInstance(WebSpider.SEARCH_ALL,this);
+        mFragmentSearchBangumi  = SearchResultFragment.newInstance(WebSpider.SEARCH_BANGUMI,this);
+        mFragmentSearchGame     = SearchResultFragment.newInstance(WebSpider.SEARCH_GAME,this);
+        mFragmentSearchMusic    = SearchResultFragment.newInstance(WebSpider.SEARCH_MUSIC,this);
+        mFragmentSearchBook     = SearchResultFragment.newInstance(WebSpider.SEARCH_BOOK,this);
 
         final List<Fragment> viewList = new ArrayList<>();
         viewList.add(mFragmentSearchAll);
@@ -127,10 +129,19 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         SearchView searchView =
                 (SearchView) menu.findItem(R.id.search).getActionView();
         searchView.setOnQueryTextListener(this);
+        searchView.setOnCloseListener(this);
         return true;
 
     }
-
+    @Override
+    public boolean onClose() {
+        if (getFragmentManager().findFragmentByTag("Details") != null) {
+            this.getFragmentManager()
+                    .popBackStack();
+            return false;
+        }
+        return false;
+    }
     public void launchDetailFragment(DataType.SearchResultItem item) {
         mDetailFragment = ItemDetailFragment.newInstance(item);
         getFragmentManager()
