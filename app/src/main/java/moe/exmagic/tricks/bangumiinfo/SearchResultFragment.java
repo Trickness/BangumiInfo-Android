@@ -28,7 +28,7 @@ import moe.exmagic.tricks.bangumiinfo.utils.DataType;
 import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
 
 /**
- * Created by SternWZhang on 17-1-5.
+ * Created by SternW Zhang on 17-1-5.
  * 搜索结果显示的List页面
  */
 
@@ -116,7 +116,7 @@ public class SearchResultFragment extends Fragment {
     public void search(String keyWord){
         this.mSearchKeyWord = keyWord;
         WebSpider spider = WebSpider.get(getActivity());
-        spider.searchItem(mSearchKeyWord,mSearchType,1,this);
+        spider.Search(mSearchKeyWord,mSearchType,1,this);
         ((SwipeRefreshLayout)mFragmentView.findViewById(R.id.swipeRefreshLayout)).setRefreshing(true);
     }
     @Override
@@ -133,7 +133,7 @@ public class SearchResultFragment extends Fragment {
             if (newState == RecyclerView.SCROLL_STATE_IDLE
                     && lastVisibleItem + 1 == mAdapter.getItemCount()) {
                 mSwipeRefreshLayout.setRefreshing(true);
-                WebSpider.get(getActivity()).searchItem(mSearchResult.keyWord,mSearchResult.searchType,mSearchResult.currentPage+1, mRootSearchFragment);
+                WebSpider.get(getActivity()).Search(mSearchResult.keyWord,mSearchResult.searchType,mSearchResult.currentPage+1, (SearchResultFragment) mRootSearchFragment);
             }
         }
         @Override
@@ -278,7 +278,7 @@ public class SearchResultFragment extends Fragment {
             @Override
             public void onRefresh() {
                 if(!mSearchKeyWord.equals(""))
-                    WebSpider.get(getActivity()).searchItem(mSearchKeyWord,mSearchType,1, mRootSearchFragment);
+                    WebSpider.get(getActivity()).Search(mSearchKeyWord,mSearchType,1, (SearchResultFragment) mRootSearchFragment);
                 else
                     mSwipeRefreshLayout.setRefreshing(false);
             }

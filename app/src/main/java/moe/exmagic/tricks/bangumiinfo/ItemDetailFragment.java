@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import moe.exmagic.tricks.bangumiinfo.utils.DataType;
 
 /**
- * Created by SternWZhang on 17-1-9.
+ * Created by SternW Zhang on 17-1-9.
  * 项目细明页
  */
 

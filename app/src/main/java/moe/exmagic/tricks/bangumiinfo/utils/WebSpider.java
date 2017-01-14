@@ -1,9 +1,7 @@
 package moe.exmagic.tricks.bangumiinfo.utils;
 
-import android.app.Fragment;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -20,7 +18,7 @@ import java.util.regex.Pattern;
 import moe.exmagic.tricks.bangumiinfo.SearchResultFragment;
 
 /**
- * Created by SternWZhang on 17-1-4.
+ * Created by SternW Zhang on 17-1-4.
  * WebSpider
  */
 
@@ -41,18 +39,129 @@ public class WebSpider {
     public static int ITEM_TYPE_GAME        = 4;
     public static int ITEM_TYPE_3DIM        = 6;
 
-    private Map<String,String> Cookies = null;
-    public String   error           = "";
-    public String   keyWord         = "";
-    private String  TargetUrl       = "";
-    private Document             HttpDocument = null;
+    private Map<String,String>  Cookies     = null;
 
-    public static class SearchResult{
-        public int maxPage = 0;
-        public int currentPage = 0;
-        public String searchType = "0";
-        public String keyWord = "";
-        public ArrayList<DataType.SearchResultItem> result = new ArrayList<>();
+    /*
+    *  私有方法
+    */
+    private abstract class DOMParser<RetType>{
+        abstract RetType    ParseDOM(Document doc);
+        abstract void       UpdateUI(RetType result);
+    }
+    private class SearchResultParser extends DOMParser<WebSpider.SearchResult>{
+        private int currentPage;
+        private String searchType;
+        private String keyWords;
+        private SearchResultFragment fm;
+        SearchResultParser(int curpage, String type, String keyword,SearchResultFragment Fm){
+            this.currentPage = curpage;
+            this.searchType = type;
+            this.keyWords = keyword;
+            this.fm = Fm;
+        }
+        @Override
+        WebSpider.SearchResult ParseDOM(Document doc) {
+            if(doc == null){
+                return null;
+            }
+            Elements Items = doc.getElementsByClass("item");
+            WebSpider.SearchResult result = new WebSpider.SearchResult();
+            DataType.SearchResultItem resultItem;
+
+            result.currentPage = currentPage;
+            result.maxPage = 0;     // !!!
+            result.searchType = searchType;
+            result.keyWord = keyWords;
+
+            for (Element Item : Items){
+                resultItem = new DataType.SearchResultItem();
+                resultItem.ItemId = Integer.valueOf(Item.attr("id").substring(5));
+                if(Item.getElementsByTag("img").first() != null)
+                    resultItem.CoverUrl = Item.getElementsByTag("img").first().attr("src");
+                else
+                    resultItem.CoverUrl = "";
+                resultItem.DetailUrl = WebSpider.BASE_SITE + "subject/" + resultItem.ItemId;
+
+                Item = Item.getElementsByClass("inner").first();
+
+                resultItem.ItemType = Integer.parseInt(Item.getElementsByClass("ll").first().attr("class").substring(30,31));
+                resultItem.Title = Item.getElementsByTag("a").first().ownText();
+
+                if (Item.getElementsByClass("grey").first() != null) {
+                    resultItem.OriginalTitle = Item.getElementsByClass("grey").first().ownText();
+                }else{
+                    resultItem.OriginalTitle = "";
+                }
+                resultItem.Info = Item.getElementsByClass("info").first().ownText();
+
+                if (Item.getElementsByClass("rank").first() != null){
+                    resultItem.Rank = Integer.valueOf(Item.getElementsByClass("rank").first().ownText());
+                }else{
+                    resultItem.Rank = 0;
+                }
+
+                if (Item.getElementsByClass("fade").first() != null){
+                    resultItem.Score = Float.parseFloat(Item.getElementsByClass("fade").first().ownText());
+                }else{
+                    resultItem.Score = 0;
+                }
+
+                if (Item.getElementsByClass("tip_j").first() != null)
+                    resultItem.RankN = Item.getElementsByClass("tip_j").first().ownText();
+
+                result.result.add(resultItem);
+            }
+            if(doc.getElementById("multipage") != null && doc.getElementById("multipage").getElementsByClass("p").last() != null){
+                String tmpUrl = doc.getElementById("multipage").getElementsByClass("p").last().attr("href");
+                String[] tmpStrs = tmpUrl.split("=");
+                result.maxPage = Integer.parseInt(tmpStrs[tmpStrs.length-1]);
+            }else{
+                result.maxPage = 10;
+            }
+            return result;
+        }
+        @Override
+        void UpdateUI(WebSpider.SearchResult result) {
+            if(result.currentPage == 1)
+                fm.updateUI(result);
+            else
+                fm.appendUI(result);
+        }
+    }
+
+    private class AsyncTaskNetwork extends  AsyncTask<Void,Void,Document>{
+        private WebSpider   mParent;
+        private DOMParser<SearchResult> mParser;
+        private String TargetUrl;
+        private AsyncTaskNetwork(WebSpider parent, DOMParser<SearchResult> parser, String url){
+            mParent = parent;
+            mParser = parser;
+            TargetUrl = url;
+        }
+        @Override
+        protected Document doInBackground(Void... params) {
+            Document doc;
+            try {
+                if(mParent.Cookies == null){
+                    mParent.Cookies = Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute().cookies();
+                    if(mParent.Cookies == null)
+                        return null;
+                }
+                doc = Jsoup.connect(TargetUrl)
+                        .cookies(mParent.Cookies)
+                        .timeout(3000)
+                        .get();
+            }catch (IOException e){
+                mParent.unlock();
+                return null;
+            }
+            this.mParent.unlock();
+            return doc;
+        }
+        @Override
+        protected void onPostExecute(Document doc){
+            mParser.UpdateUI(mParser.ParseDOM(doc));
+        }
     }
     private class FetchResponse extends AsyncTask<WebSpider,Void,Void> {
         @Override
@@ -62,52 +171,10 @@ public class WebSpider {
             try {
                 res = Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute();
             }catch (IOException e){
-                parent.setError(e.toString());
                 return null;
             }
-            parent.setCookies(res.cookies());
+            parent.Cookies = res.cookies();
             return null;
-        }
-    }
-    private class FetchHttp extends AsyncTask<Void,Void,Void> {
-        private WebSpider   mParent;
-        private int         mCurrentPage;
-        private String      mSearchType;
-        private Fragment mFm;
-        private FetchHttp(WebSpider parent, int currentPage, String searchType,Fragment fm){
-            this.mParent = parent;
-            this.mCurrentPage = currentPage;
-            this.mSearchType = searchType;
-            this.mFm = fm;
-        }
-        @Override
-        protected Void doInBackground(Void... v){
-            try {
-                if(mParent.getCookies() == null){
-                    mParent.setCookies(Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute().cookies());
-                    if(mParent.getCookies() == null)
-                        return null;
-                }
-                mParent.HttpDocument = Jsoup.connect(mParent.TargetUrl)
-                        .cookies(mParent.getCookies())
-                        .timeout(3000)
-                        .get();
-            }catch (IOException e){
-                mParent.setError(e.toString());
-                mParent.unlock();
-                mParent.HttpDocument = null;
-                return null;
-            }
-            this.mParent.unlock();
-            return null;
-        }
-        @Override
-        protected void onPostExecute(Void v){
-            WebSpider.SearchResult result = parseDOMResult(this.mParent.HttpDocument,mCurrentPage,mSearchType,this.mParent.keyWord);
-            if(mCurrentPage == 1)
-                ((SearchResultFragment)mFm).updateUI(result);
-            else
-                ((SearchResultFragment)mFm).appendUI(result);
         }
     }
 
@@ -119,112 +186,11 @@ public class WebSpider {
         this.syn_lock = 1;
         return true;
     }
-    private void unlock(){
+    private void    unlock(){
         this.syn_lock = 0;
     }
 
-    /*
-    * 定义全局变量
-    */
-    private WebSpider(Context context) {
-        new FetchResponse().execute(this);      // set cookies
-    }
-    private Document FetchHTTPResult(String keyWords,String type, int page,Fragment fm){
-        String targetUrl;
-        targetUrl = BASE_SITE + "subject_search/" + WebSpider.StringFilter(keyWords) + "?cat=" + type;
-        this.keyWord = keyWords;
-        if (page > 0){
-            targetUrl += "&page=" + page;
-        } else {
-            page = 1;
-        }
-        this.TargetUrl = targetUrl;
-        Log.d("TargetUrl",targetUrl);
-        if (!this.lock())
-            return null;
-        new FetchHttp(this,page,type,fm).execute();
-        return null;
-    }
-    private void setCookies(Map<String,String> cookies){
-        this.Cookies = cookies;
-    }
-    private void setError(String error){
-        this.error = error;
-    }
-    private Map<String,String> getCookies(){
-        return  this.Cookies;
-    }
-    private WebSpider.SearchResult parseDOMResult(Document HttpDocument,int currentPage, String searchType, String keyWords){
-        if(HttpDocument == null){
-            return null;
-        }
-        Elements Items = HttpDocument.getElementsByClass("item");
-        WebSpider.SearchResult result = new WebSpider.SearchResult();
-        DataType.SearchResultItem resultItem;
-
-        result.currentPage = currentPage;
-        result.maxPage = 0;     // !!!
-        result.searchType = searchType;
-        result.keyWord = keyWords;
-
-        for (Element Item : Items){
-            resultItem = new DataType.SearchResultItem();
-            resultItem.ItemId = Integer.valueOf(Item.attr("id").substring(5));
-            if(Item.getElementsByTag("img").first() != null)
-                resultItem.CoverUrl = Item.getElementsByTag("img").first().attr("src");
-            else
-                resultItem.CoverUrl = "";
-            resultItem.DetailUrl = WebSpider.BASE_SITE + "subject/" + resultItem.ItemId;
-
-            Item = Item.getElementsByClass("inner").first();
-
-            resultItem.ItemType = Integer.parseInt(Item.getElementsByClass("ll").first().attr("class").substring(30,31));
-            resultItem.Title = Item.getElementsByTag("a").first().ownText();
-
-            if (Item.getElementsByClass("grey").first() != null) {
-                resultItem.OriginalTitle = Item.getElementsByClass("grey").first().ownText();
-            }else{
-                resultItem.OriginalTitle = "";
-            }
-            resultItem.Info = Item.getElementsByClass("info").first().ownText();
-
-            if (Item.getElementsByClass("rank").first() != null){
-                resultItem.Rank = Integer.valueOf(Item.getElementsByClass("rank").first().ownText());
-            }else{
-                resultItem.Rank = 0;
-            }
-
-            if (Item.getElementsByClass("fade").first() != null){
-                resultItem.Score = Float.parseFloat(Item.getElementsByClass("fade").first().ownText());
-            }else{
-                resultItem.Score = 0;
-            }
-
-            if (Item.getElementsByClass("tip_j").first() != null)
-                resultItem.RankN = Item.getElementsByClass("tip_j").first().ownText();
-
-            result.result.add(resultItem);
-        }
-        if(HttpDocument.getElementById("multipage") != null && HttpDocument.getElementById("multipage").getElementsByClass("p").last() != null){
-            String tmpUrl = HttpDocument.getElementById("multipage").getElementsByClass("p").last().attr("href");
-            String[] tmpStrs = tmpUrl.split("=");
-            result.maxPage = Integer.parseInt(tmpStrs[tmpStrs.length-1]);
-        }else{
-            result.maxPage = 10;
-        }
-        return result;
-    }
-    public SearchResult searchItem(String keyWords, String type, int page,Fragment fm){
-        return parseDOMResult(this.FetchHTTPResult(keyWords,type,page,fm),page,type,this.keyWord);
-    }
-    private static WebSpider sWebSpider;
-    public static WebSpider get(Context context){
-        if(sWebSpider == null){
-            sWebSpider = new WebSpider(context);
-        }
-        return sWebSpider;
-    }
-    public static String StringFilter(String   str){
+    private static String StringFilter(String   str){
         // 只允许字母和数字
         // String   regEx  =  "[^a-zA-Z0-9]";
         // 清除掉所有特殊字符
@@ -232,6 +198,48 @@ public class WebSpider {
         Pattern p   =   Pattern.compile(regEx);
         Matcher m   =   p.matcher(str);
         return   m.replaceAll("+").trim();
+    }
+
+
+    /*
+    * 定义全局变量
+    */
+    private static WebSpider sWebSpider;
+    private WebSpider(Context context) {
+        new FetchResponse().execute(this);      // set cookies
+    }
+
+    /*
+    * 公共类
+    */
+    public static class SearchResult{
+        public int maxPage = 0;
+        public int currentPage = 0;
+        public String searchType = "0";
+        public String keyWord = "";
+        public ArrayList<DataType.SearchResultItem> result = new ArrayList<>();
+    }
+
+    /*
+    * 公共方法
+    */
+    public void Search(String keyWords, String type, int page, SearchResultFragment fm){
+        String targetUrl;
+        targetUrl = BASE_SITE + "subject_search/" + WebSpider.StringFilter(keyWords) + "?cat=" + type;
+        if (page > 0){
+            targetUrl += "&page=" + page;
+        } else {
+            page = 1;
+        }
+        if (!this.lock())
+            return;
+        new AsyncTaskNetwork(this,new SearchResultParser(page,type,keyWords,fm),targetUrl).execute();
+    }
+    public static WebSpider get(Context context){
+        if(sWebSpider == null){
+            sWebSpider = new WebSpider(context);
+        }
+        return sWebSpider;
     }
     public static String getStrType(int type){
         String strType = "" + type;
