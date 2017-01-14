@@ -44,7 +44,7 @@ public class WebSpider {
     /*
     *  私有方法
     */
-    private abstract class DOMParser<RetType>{
+    public abstract class DOMParser<RetType>{
         abstract RetType    ParseDOM(Document doc);
         abstract void       UpdateUI(RetType result);
     }
@@ -126,6 +126,96 @@ public class WebSpider {
                 fm.updateUI(result);
             else
                 fm.appendUI(result);
+        }
+    }
+    private class ItemDetailParser extends DOMParser<DataType.DetailItem>{
+        @Override
+        DataType.DetailItem ParseDOM(Document doc) {
+            if(doc == null)
+                return null;
+            DataType.DetailItem result = new DataType.DetailItem();
+            // parse summary
+            if (doc.getElementById("subject_summary") != null)
+                result.Summary = doc.getElementById("subject_summary").text();
+            // parse episode
+            if (doc.getElementById("subject_prg") != null){
+                Elements elements = doc.getElementsByClass("prg_list").first().children();
+                DataType.EpItem episode;
+                for(Element e : elements){
+                    episode = new DataType.EpItem();
+
+                    episode.EpID = e.attr("href").substring(4);
+                    episode.Episode = e.text();
+                    episode.Title = e.attr("title");
+                    episode.isAvailable = e.attr("class").endsWith("r");
+
+                    result.Eps.put(episode.Episode,episode);
+                }
+            }
+            // parse tags
+            Element tmp = doc.getElementsByClass("subject_tag_section").first();
+            if(tmp != null){
+                tmp = tmp.getElementsByClass("inner").first();
+                for(Element e : tmp.getElementsByTag("a")){
+                    result.Tags.add(e.text());
+                }
+            }
+            //parse characters
+            if(doc.getElementById("browserItemList") != null){
+                DataType.CharacterItem character;
+                for (Element e : doc.getElementById("browserItemList").children()){
+                    character = new DataType.CharacterItem();
+                    character.CommentNumber = e.getElementsByClass("fade rr").first().text();
+                    character.CharacterName = e.getElementsByClass("userImage").first().parent().text();
+                    if(e.getElementsByClass("tip").size() == 1){
+                        character.CharacterTranslation = e.getElementsByClass("tip").first().text();
+                    }
+                    character.CharacterDetailUrl = e.getElementsByClass("userImage").first().children().first().attr("src");
+
+                    e = e.getElementsByClass("tip_j").first();
+
+                    character.CharacterType = e.child(0).child(0).text();
+                    if(e.getElementsByTag("a").size() == 1){
+                        character.CVName = e.getElementsByTag("a").first().text();
+                        character.CVDetailUrl = WebSpider.BASE_SITE + e.getElementsByTag("a").first().attr("href").substring(1);
+                    }
+                    result.CharactersList.add(character);
+                }
+            }
+            // parse blogs
+            if(doc.getElementById("entry_list") != null){
+                DataType.BlogItem blog;
+                for (Element e : doc.getElementById("entry_list").children()){
+                    blog = new DataType.BlogItem();
+                    blog.Title = e.getElementsByClass("title").first().child(0).text();
+                    blog.BlogID = e.getElementsByClass("title").first().child(0).attr("href").substring(6);
+                    blog.Submitter.UserHeaderUrl = e.getElementsByTag("img").first().attr("src");
+                    blog.Submitter.UserNickname = e.getElementsByClass("tip_j").first().child(0).text();
+                    blog.Submitter.UserID = e.getElementsByClass("tip_j").first().child(0).attr("href").substring(6);
+                    blog.Submitter.isHeaderLoading = false;
+                    blog.SubmitDatetime = e.getElementsByClass("time").first().text();
+                    blog.BlogCommentNumber = e.getElementsByClass("orange").first().text();
+                    blog.BlogPreview = e.getElementsByClass("content").first().text();
+                    result.Blogs.add(blog);
+                }
+            }
+            if(doc.getElementsByTag("tbody").size() == 1){
+                DataType.TopicItem topic;
+                for (Element e : doc.getElementsByTag("TopicItem")){
+                    topic = new DataType.TopicItem();
+                    topic.Title = e.child(0).child(0).text();
+                    topic.TopicID = e.child(0).child(0).attr("href").substring(15);
+                    topic.Submitter.UserID = e.child(1).child(0).attr("href").substring(6);
+                    topic.Submitter.UserNickname = e.child(1).child(0).text();
+                    topic.RepliesNumber = Integer.parseInt(e.child(2).child(0).text().split(" ")[0]);
+                    topic.SubmitDate = e.child(3).child(0).text();
+                    result.Topics.add(topic);
+                }
+            }
+            return null;
+        }
+        @Override
+        void UpdateUI(DataType.DetailItem result) {
         }
     }
 

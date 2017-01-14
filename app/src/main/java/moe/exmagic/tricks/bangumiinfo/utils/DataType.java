@@ -31,11 +31,12 @@ public class DataType {
         public String UserID;
         public String UserNickname;
         public Bitmap UserHeader;
+        public String UserHeaderUrl;
         public boolean isHeaderLoading;
     }
     public static class DetailItem{
         public SearchResultItem         BaseItem;   // base
-        public String                   Info;       // 简介（普通细节）
+        public String                   Summary;    // 简介（普通细节）
         public Map<String,EpItem>       Eps;
         public ArrayList<String>        Tags;
         public ArrayList<BlogItem>      Blogs;
@@ -51,6 +52,7 @@ public class DataType {
         public String CharacterType;
         public String CVName;
         public String CVDetailUrl;
+        public String CommentNumber;
     }
     public static class CommentItem{
         public UserItem User;
@@ -59,11 +61,12 @@ public class DataType {
         public String   Comment;
     }
     public static class BlogItem{
-        public UserItem User;
-        public Date     SubmitDatetime;
+        public String   Title;
+        public UserItem Submitter;
+        public String   SubmitDatetime;
         public String   BlogPreview;
         public String   BlogID;
-        public int      BlogCommentNumber;
+        public String   BlogCommentNumber;
     }
 
     public static class PersonItem{
@@ -75,14 +78,15 @@ public class DataType {
         public String   Title;
         public String   Translation;
         public String   Episode;
-        public int      CommentsNumber;
+        public int      CommentsNumber;     // cannot get this filed
         public String   EpID;
+        public boolean  isAvailable;
     }
     public static class TopicItem{
         public String       Title;
-        public PersonItem   Submitter;
+        public UserItem     Submitter;
         public int          RepliesNumber;
-        public Date         LastReplyDate;
+        public String       SubmitDate;
         public String       TopicID;
     }
 }
