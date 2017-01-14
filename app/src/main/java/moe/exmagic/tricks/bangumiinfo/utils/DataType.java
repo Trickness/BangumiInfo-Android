@@ -3,7 +3,8 @@ package moe.exmagic.tricks.bangumiinfo.utils;
 import android.graphics.Bitmap;
 
 /**
- * Created by tricks on 17-1-4.
+ * Created by SternWZhang on 17-1-4.
+ * 公有数据类型都定义在这里
  */
 
 

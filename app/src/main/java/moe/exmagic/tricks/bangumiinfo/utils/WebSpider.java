@@ -1,8 +1,8 @@
 package moe.exmagic.tricks.bangumiinfo.utils;
 
+import android.app.Fragment;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 
 import org.jsoup.Connection;
@@ -35,11 +35,11 @@ public class WebSpider {
     public static String BASE_SITE         = "http://bangumi.tv/";
     public static String USER_AGENT        = "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0\\r\\n";
 
-    public static int ITEM_TYPE_BANGUMI = 1;
-    public static int ITEM_TYPE_BOOK = 2;
-    public static int ITEM_TYPE_MUSIC = 3;
-    public static int ITEM_TYPE_GAME = 4;
-    public static int ITEM_TYPE_3DIM = 6;
+    public static int ITEM_TYPE_BANGUMI     = 1;
+    public static int ITEM_TYPE_BOOK        = 2;
+    public static int ITEM_TYPE_MUSIC       = 3;
+    public static int ITEM_TYPE_GAME        = 4;
+    public static int ITEM_TYPE_3DIM        = 6;
 
     private Map<String,String> Cookies = null;
     public String   error           = "";
@@ -73,8 +73,8 @@ public class WebSpider {
         private WebSpider   mParent;
         private int         mCurrentPage;
         private String      mSearchType;
-        private Fragment    mFm;
-        public FetchHttp(WebSpider parent, int currentPage, String searchType,Fragment fm){
+        private Fragment mFm;
+        private FetchHttp(WebSpider parent, int currentPage, String searchType,Fragment fm){
             this.mParent = parent;
             this.mCurrentPage = currentPage;
             this.mSearchType = searchType;
@@ -113,13 +113,8 @@ public class WebSpider {
 
     private int syn_lock = 0;
     private boolean lock(){
-        while(this.syn_lock == 1){
+        if(this.syn_lock == 1){
             return false;
-            /*try{      // 阻塞
-                Thread.sleep(100);
-            }catch(InterruptedException e){
-                return false;
-            }*/
         }
         this.syn_lock = 1;
         return true;
@@ -128,8 +123,11 @@ public class WebSpider {
         this.syn_lock = 0;
     }
 
+    /*
+    * 定义全局变量
+    */
     private WebSpider(Context context) {
-        new FetchResponse().execute(this);
+        new FetchResponse().execute(this);      // set cookies
     }
     private Document FetchHTTPResult(String keyWords,String type, int page,Fragment fm){
         String targetUrl;
@@ -137,6 +135,8 @@ public class WebSpider {
         this.keyWord = keyWords;
         if (page > 0){
             targetUrl += "&page=" + page;
+        } else {
+            page = 1;
         }
         this.TargetUrl = targetUrl;
         Log.d("TargetUrl",targetUrl);

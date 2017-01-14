@@ -1,10 +1,10 @@
 package moe.exmagic.tricks.bangumiinfo;
 
+import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -39,13 +39,15 @@ public class SearchResultFragment extends Fragment {
     private String mSearchKeyWord = "";
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView.LayoutManager mLayoutManager;
-    private scrollListener mScrollListener;
     private String mSearchType;
     private String mTitle = "";
     private View mFragmentView;
     final Fragment mRootSearchFragment = this;
-
-    private static String KEY_SEARCH_RESULT = "moe.exmagic.searchResult";
+    private MainActivity mMainActivity;
+    public SearchResultFragment setParent(MainActivity parent){
+        mMainActivity = parent;
+        return this;
+    }
 
     @Override
     public void onDestroyView() {
@@ -216,7 +218,7 @@ public class SearchResultFragment extends Fragment {
         @Override
         public ItemsHolder onCreateViewHolder(ViewGroup parent, int viewType){
             LayoutInflater inflater = LayoutInflater.from(getActivity());
-            View view = inflater.inflate(R.layout.search_result_item,parent,false);
+            View view = inflater.inflate(R.layout.item_search_result,parent,false);
             return new ItemsHolder(view);
         }
         @Override
@@ -261,6 +263,7 @@ public class SearchResultFragment extends Fragment {
         }
     }
     public void onItemClicked(DataType.SearchResultItem item){
+        mMainActivity.launchDetailFragment(item);
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -281,8 +284,7 @@ public class SearchResultFragment extends Fragment {
             }
         });
 
-        mScrollListener = new scrollListener();
-        mItemListView.setOnScrollListener(mScrollListener);
+        mItemListView.setOnScrollListener(new scrollListener());
         mFragmentView = v;
         return v;
     }
