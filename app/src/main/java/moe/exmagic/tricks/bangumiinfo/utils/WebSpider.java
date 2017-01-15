@@ -11,6 +11,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,6 +33,7 @@ public class WebSpider {
     public static String SEARCH_PERSON     = "person";
     public static String BASE_SITE         = "http://bangumi.tv/";
     public static String USER_AGENT        = "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0\\r\\n";
+    public static String PROTOCOL      = "http:";
 
     public static int ITEM_TYPE_BANGUMI     = 1;
     public static int ITEM_TYPE_BOOK        = 2;
@@ -138,11 +140,12 @@ public class WebSpider {
             if (doc.getElementById("subject_summary") != null)
                 result.Summary = doc.getElementById("subject_summary").text();
             // parse episode
-            if (doc.getElementById("subject_prg") != null){
+            if (doc.getElementsByClass("subject_prg").size() == 1){
                 Elements elements = doc.getElementsByClass("prg_list").first().children();
                 DataType.EpItem episode;
                 for(Element e : elements){
                     episode = new DataType.EpItem();
+                    e = e.child(0);
 
                     episode.EpID = e.attr("href").substring(4);
                     episode.Episode = e.text();
@@ -170,7 +173,7 @@ public class WebSpider {
                     if(e.getElementsByClass("tip").size() == 1){
                         character.CharacterTranslation = e.getElementsByClass("tip").first().text();
                     }
-                    character.CharacterDetailUrl = e.getElementsByClass("userImage").first().children().first().attr("src");
+                    character.CharacterDetailUrl = WebSpider.PROTOCOL + e.getElementsByClass("userImage").first().children().first().attr("src");
 
                     e = e.getElementsByClass("tip_j").first();
 
@@ -182,7 +185,7 @@ public class WebSpider {
                     result.CharactersList.add(character);
                 }
             }
-            // parse blogs
+            // parse blog
             if(doc.getElementById("entry_list") != null){
                 DataType.BlogItem blog;
                 for (Element e : doc.getElementById("entry_list").children()){
@@ -199,6 +202,7 @@ public class WebSpider {
                     result.Blogs.add(blog);
                 }
             }
+            // parse topics
             if(doc.getElementsByTag("tbody").size() == 1){
                 DataType.TopicItem topic;
                 for (Element e : doc.getElementsByTag("TopicItem")){
@@ -212,7 +216,19 @@ public class WebSpider {
                     result.Topics.add(topic);
                 }
             }
-            return null;
+            // parse KV-info
+            ArrayList<String> value;
+            String key;
+            for (Element e : doc.getElementById("infobox").children()){
+                for (String s : e.text().split(";")){
+                    value = new ArrayList<>();
+                    String[] ss = s.split(":");
+                    key = ss[0];
+                    Collections.addAll(value, ss[1].split("、"));
+                    result.KVInfo.put(key,value);
+                }
+            }
+            return result;
         }
         @Override
         void UpdateUI(DataType.DetailItem result) {
@@ -223,7 +239,7 @@ public class WebSpider {
         private WebSpider   mParent;
         private DOMParser<SearchResult> mParser;
         private String TargetUrl;
-        private AsyncTaskNetwork(WebSpider parent, DOMParser<SearchResult> parser, String url){
+        private AsyncTaskNetwork(WebSpider parent, DOMParser parser, String url){
             mParent = parent;
             mParser = parser;
             TargetUrl = url;
@@ -324,6 +340,9 @@ public class WebSpider {
         if (!this.lock())
             return;
         new AsyncTaskNetwork(this,new SearchResultParser(page,type,keyWords,fm),targetUrl).execute();
+    }
+    public void GetItemDetail(String Url){
+        new AsyncTaskNetwork(this,new ItemDetailParser(),Url).execute();
     }
     public static WebSpider get(Context context){
         if(sWebSpider == null){

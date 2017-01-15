@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -37,13 +38,13 @@ public class DataType {
     public static class DetailItem{
         public SearchResultItem         BaseItem;   // base
         public String                   Summary;    // 简介（普通细节）
-        public Map<String,EpItem>       Eps;
-        public ArrayList<String>        Tags;
-        public ArrayList<BlogItem>      Blogs;
-        public ArrayList<CharacterItem> CharactersList;
-        public ArrayList<CommentItem>   Comments;
-        public ArrayList<TopicItem>     Topics;
-        public Map<String,ArrayList<PersonItem>> KVInfo;     // key-value infomation
+        public Map<String,EpItem>       Eps             = new HashMap<>();
+        public ArrayList<String>        Tags            = new ArrayList<>();
+        public ArrayList<BlogItem>      Blogs           = new ArrayList<>();
+        public ArrayList<CharacterItem> CharactersList  = new ArrayList<>();
+        public ArrayList<CommentItem>   Comments        = new ArrayList<>();
+        public ArrayList<TopicItem>     Topics          = new ArrayList<>();
+        public Map<String,ArrayList<String>> KVInfo     = new HashMap<>();     // key-value infomation
     }
     public static class CharacterItem{
         public String CharacterName;
@@ -76,7 +77,7 @@ public class DataType {
     }
     public static class EpItem{
         public String   Title;
-        public String   Translation;
+        public String   Translation;        // cannot get his filed
         public String   Episode;
         public int      CommentsNumber;     // cannot get this filed
         public String   EpID;
