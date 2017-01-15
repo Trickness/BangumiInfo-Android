@@ -8,11 +8,12 @@ import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.SearchView;
 
 import com.astuetz.PagerSlidingTabStrip;
 
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity
     private Fragment mFragmentSearchMusic;
     private Fragment mFragmentSearchBook;
     private Fragment mDetailFragment;
+    private MenuItem mSearchView;
 
     private class myFragmentPagerAdapter extends FragmentPagerAdapter {
         private List<Fragment> mViewList;
@@ -120,48 +122,68 @@ public class MainActivity extends AppCompatActivity
         SearchResultFragment fm = (SearchResultFragment) mPagerAdapter.getItem(mPager.getCurrentItem());
         mCurrentSearchKeyWord = query;
         fm.search(query);
+        mSearchView.getActionView().clearFocus();
         return true;
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.options_menu, menu);
-        SearchView searchView =
-                (SearchView) menu.findItem(R.id.search).getActionView();
-        searchView.setOnQueryTextListener(this);
-        searchView.setOnCloseListener(this);
+        mSearchView = menu.findItem(R.id.search);
+        ((SearchView)mSearchView.getActionView()).setOnQueryTextListener(this);
+        ((SearchView)mSearchView.getActionView()).setOnCloseListener(this);
         return true;
 
     }
     @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == android.R.id.home) {
+            if (getFragmentManager().findFragmentByTag("Details") != null) {
+                this.backToMain();
+            }
+            return false;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    @Override
     public boolean onClose() {
         if (getFragmentManager().findFragmentByTag("Details") != null) {
-            this.getFragmentManager()
-                    .popBackStack();
+            this.backToMain();
             return false;
         }
         return false;
     }
     public void launchDetailFragment(DataType.SearchResultItem item) {
-        mDetailFragment = ItemDetailFragment.newInstance(item);
+        mDetailFragment = ItemDetailFragment.newInstance(item,this);
         getFragmentManager()
                 .beginTransaction()
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                 .add(R.id.detail_container,mDetailFragment,"Details")
                 .addToBackStack(null)
                 .commit();
-
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle(item.Title);
+        mSearchView.setVisible(false);
+    }
+    public SearchView getSearchView(){
+        return (SearchView) mSearchView.getActionView();
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
             if (getFragmentManager().findFragmentByTag("Details") != null) {
-                this.getFragmentManager()
-                        .popBackStack();
+                this.backToMain();
                 return false;
             }
         }
         return super.onKeyDown(keyCode, event);
+    }
+    public void backToMain(){
+        this.getFragmentManager()
+                .popBackStack();
+        mSearchView.setVisible(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        getSupportActionBar().setTitle(R.string.app_name);
     }
 }

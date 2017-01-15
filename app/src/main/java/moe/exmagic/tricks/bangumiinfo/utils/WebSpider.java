@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import moe.exmagic.tricks.bangumiinfo.ItemDetailFragment;
 import moe.exmagic.tricks.bangumiinfo.SearchResultFragment;
 
 /**
@@ -132,6 +133,10 @@ public class WebSpider {
         }
     }
     private class ItemDetailParser extends DOMParser<DataType.DetailItem>{
+        private ItemDetailFragment mFragment;
+        ItemDetailParser(ItemDetailFragment fragment){
+            mFragment = fragment;
+        }
         @Override
         DataType.DetailItem ParseDOM(Document doc) {
             if(doc == null)
@@ -243,6 +248,7 @@ public class WebSpider {
         }
         @Override
         void UpdateUI(DataType.DetailItem result) {
+            mFragment.updateUI(result);
         }
     }
 
@@ -352,8 +358,8 @@ public class WebSpider {
             return;
         new AsyncTaskNetwork(this,new SearchResultParser(page,type,keyWords,fm),targetUrl).execute();
     }
-    public void GetItemDetail(String Url){
-        new AsyncTaskNetwork(this,new ItemDetailParser(),Url).execute();
+    public void GetItemDetail(String Url,ItemDetailFragment fragment){
+        new AsyncTaskNetwork(this,new ItemDetailParser(fragment),Url).execute();
     }
     public static WebSpider get(Context context){
         if(sWebSpider == null){
