@@ -12,6 +12,7 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -141,6 +142,7 @@ public class WebSpider {
                 result.Summary = doc.getElementById("subject_summary").text();
             // parse episode
             if (doc.getElementsByClass("subject_prg").size() == 1){
+                result.Eps = new HashMap<>();
                 Elements elements = doc.getElementsByClass("prg_list").first().children();
                 DataType.EpItem episode;
                 for(Element e : elements){
@@ -158,6 +160,7 @@ public class WebSpider {
             // parse tags
             Element tmp = doc.getElementsByClass("subject_tag_section").first();
             if(tmp != null){
+                result.Tags = new ArrayList<>();
                 tmp = tmp.getElementsByClass("inner").first();
                 for(Element e : tmp.getElementsByTag("a")){
                     result.Tags.add(e.text());
@@ -165,6 +168,7 @@ public class WebSpider {
             }
             //parse characters
             if(doc.getElementById("browserItemList") != null){
+                result.CharactersList = new ArrayList<>();
                 DataType.CharacterItem character;
                 for (Element e : doc.getElementById("browserItemList").children()){
                     character = new DataType.CharacterItem();
@@ -187,28 +191,33 @@ public class WebSpider {
             }
             // parse blog
             if(doc.getElementById("entry_list") != null){
+                result.Blogs = new ArrayList<>();
                 DataType.BlogItem blog;
                 for (Element e : doc.getElementById("entry_list").children()){
                     blog = new DataType.BlogItem();
                     blog.Title = e.getElementsByClass("title").first().child(0).text();
                     blog.BlogID = e.getElementsByClass("title").first().child(0).attr("href").substring(6);
-                    blog.Submitter.UserHeaderUrl = e.getElementsByTag("img").first().attr("src");
+                    blog.Submitter = new DataType.UserItem();
+                    blog.Submitter.UserHeaderUrl = WebSpider.PROTOCOL + e.getElementsByTag("img").first().attr("src");
                     blog.Submitter.UserNickname = e.getElementsByClass("tip_j").first().child(0).text();
                     blog.Submitter.UserID = e.getElementsByClass("tip_j").first().child(0).attr("href").substring(6);
                     blog.Submitter.isHeaderLoading = false;
-                    blog.SubmitDatetime = e.getElementsByClass("time").first().text();
+                    blog.SubmitDatetime = e.getElementsByClass("time").get(1).ownText();
                     blog.BlogCommentNumber = e.getElementsByClass("orange").first().text();
-                    blog.BlogPreview = e.getElementsByClass("content").first().text();
+                    blog.BlogPreview = e.getElementsByClass("content").first().ownText();
                     result.Blogs.add(blog);
                 }
             }
             // parse topics
             if(doc.getElementsByTag("tbody").size() == 1){
+                result.Topics = new ArrayList<>();
                 DataType.TopicItem topic;
-                for (Element e : doc.getElementsByTag("TopicItem")){
+                for (int i = 0; i < doc.getElementsByTag("tbody").first().children().size() - 1; i++){
+                    Element e = doc.getElementsByTag("tbody").first().child(i);
                     topic = new DataType.TopicItem();
                     topic.Title = e.child(0).child(0).text();
                     topic.TopicID = e.child(0).child(0).attr("href").substring(15);
+                    topic.Submitter = new DataType.UserItem();
                     topic.Submitter.UserID = e.child(1).child(0).attr("href").substring(6);
                     topic.Submitter.UserNickname = e.child(1).child(0).text();
                     topic.RepliesNumber = Integer.parseInt(e.child(2).child(0).text().split(" ")[0]);
@@ -217,6 +226,7 @@ public class WebSpider {
                 }
             }
             // parse KV-info
+            result.KVInfo = new HashMap<>();
             ArrayList<String> value;
             String key;
             for (Element e : doc.getElementById("infobox").children()){
@@ -228,6 +238,7 @@ public class WebSpider {
                     result.KVInfo.put(key,value);
                 }
             }
+            // TODO: Parse Music Item
             return result;
         }
         @Override
