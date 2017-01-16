@@ -8,14 +8,14 @@ import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.SearchView;
 
 import com.astuetz.PagerSlidingTabStrip;
+import com.miguelcatalan.materialsearchview.MaterialSearchView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +23,7 @@ import java.util.List;
 import moe.exmagic.tricks.bangumiinfo.utils.DataType;
 import moe.exmagic.tricks.bangumiinfo.utils.WebSpider;
 
-public class MainActivity extends AppCompatActivity
-        implements SearchView.OnQueryTextListener, SearchView.OnCloseListener{
+public class MainActivity extends AppCompatActivity {
     private String mCurrentSearchKeyWord = "";
     private ViewPager mPager;
     private PagerSlidingTabStrip mTabs;
@@ -35,7 +34,9 @@ public class MainActivity extends AppCompatActivity
     private Fragment mFragmentSearchMusic;
     private Fragment mFragmentSearchBook;
     private Fragment mDetailFragment;
-    private MenuItem mSearchView;
+    private MenuItem mSearchViewMenuItem;
+    private MaterialSearchView mSearchView;
+    private Toolbar  mToolbar;
 
     private class myFragmentPagerAdapter extends FragmentPagerAdapter {
         private List<Fragment> mViewList;
@@ -66,7 +67,11 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         mPager = (ViewPager) findViewById(R.id.pager);
         mTabs = (PagerSlidingTabStrip) findViewById(R.id.tabs);
+        mSearchView             = (MaterialSearchView) findViewById(R.id.search_view);
+        mToolbar                = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar.setTitleTextColor(getResources().getColor(R.color.colorAppTitle));
 
+        setSupportActionBar(mToolbar);
 
         mFragmentSearchAll      = SearchResultFragment.newInstance(WebSpider.SEARCH_ALL,this);
         mFragmentSearchBangumi  = SearchResultFragment.newInstance(WebSpider.SEARCH_BANGUMI,this);
@@ -108,32 +113,30 @@ public class MainActivity extends AppCompatActivity
             }
         });
         mTabs.setViewPager(mPager);
-    }
+        mSearchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                if (query.equals("")) {
+                    return false;
+                }
+                SearchResultFragment fm = (SearchResultFragment) mPagerAdapter.getItem(mPager.getCurrentItem());
+                mCurrentSearchKeyWord = query;
+                fm.search(query);
+                return false;
+            }
 
-    @Override
-    public boolean onQueryTextChange(String newText) {
-        return true;
-    }
-    @Override
-    public boolean onQueryTextSubmit(String query) {
-        if (query.equals("")) {
-            return false;
-        }
-        SearchResultFragment fm = (SearchResultFragment) mPagerAdapter.getItem(mPager.getCurrentItem());
-        mCurrentSearchKeyWord = query;
-        fm.search(query);
-        mSearchView.getActionView().clearFocus();
-        return true;
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.options_menu, menu);
-        mSearchView = menu.findItem(R.id.search);
-        ((SearchView)mSearchView.getActionView()).setOnQueryTextListener(this);
-        ((SearchView)mSearchView.getActionView()).setOnCloseListener(this);
-        return true;
-
+        getMenuInflater().inflate(R.menu.search_menu, menu);
+        mSearchViewMenuItem = menu.findItem(R.id.action_search);
+        mSearchView.setMenuItem(mSearchViewMenuItem);
+        return super.onCreateOptionsMenu(menu);
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -145,14 +148,6 @@ public class MainActivity extends AppCompatActivity
         }
         return super.onOptionsItemSelected(item);
     }
-    @Override
-    public boolean onClose() {
-        if (getFragmentManager().findFragmentByTag("Details") != null) {
-            this.backToMain();
-            return false;
-        }
-        return false;
-    }
     public void launchDetailFragment(DataType.SearchResultItem item) {
         mDetailFragment = ItemDetailFragment.newInstance(item,this);
         getFragmentManager()
@@ -161,12 +156,8 @@ public class MainActivity extends AppCompatActivity
                 .add(R.id.detail_container,mDetailFragment,"Details")
                 .addToBackStack(null)
                 .commit();
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle(item.Title);
-        mSearchView.setVisible(false);
-    }
-    public SearchView getSearchView(){
-        return (SearchView) mSearchView.getActionView();
+        mToolbar.setNavigationIcon(R.drawable.ic_action_white_back);
+        mSearchViewMenuItem.setVisible(false);
     }
 
     @Override
@@ -182,8 +173,7 @@ public class MainActivity extends AppCompatActivity
     public void backToMain(){
         this.getFragmentManager()
                 .popBackStack();
-        mSearchView.setVisible(true);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        getSupportActionBar().setTitle(R.string.app_name);
+        mToolbar.setNavigationIcon(null);
+        mSearchViewMenuItem.setVisible(true);
     }
 }
