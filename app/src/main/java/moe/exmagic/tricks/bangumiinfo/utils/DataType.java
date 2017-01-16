@@ -57,7 +57,7 @@ public class DataType {
     }
     public static class CommentItem{
         public UserItem User;
-        public Date     SubmitDatetime;
+        public String     SubmitDatetime;
         public int      Score;
         public String   Comment;
     }

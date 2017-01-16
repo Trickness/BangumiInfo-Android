@@ -48,7 +48,7 @@ public class WebSpider {
     /*
     *  私有方法
     */
-    public abstract class DOMParser<RetType>{
+    public static abstract class DOMParser<RetType>{
         abstract RetType    ParseDOM(Document doc);
         abstract void       UpdateUI(RetType result);
     }
@@ -343,6 +343,11 @@ public class WebSpider {
         public ArrayList<DataType.SearchResultItem> result = new ArrayList<>();
     }
 
+    public static class CommentItems{
+        public int maxPage = 0;
+        public int currentPage = 0;
+        public ArrayList<DataType.CommentItem> items = new ArrayList<>();
+    }
     /*
     * 公共方法
     */
