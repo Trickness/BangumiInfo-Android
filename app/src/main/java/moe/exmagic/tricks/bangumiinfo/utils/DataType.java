@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Created by SternW Zhang on 17-1-4.
@@ -38,7 +39,7 @@ public class DataType {
     public static class DetailItem{
         public SearchResultItem         BaseItem;   // base
         public String                   Summary;    // 简介（普通细节）
-        public Map<String,EpItem>       Eps;
+        public TreeMap<String,EpItem>   Eps;
         public ArrayList<String>        Tags;
         public ArrayList<BlogItem>      Blogs;
         public ArrayList<CharacterItem> CharactersList;

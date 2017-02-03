@@ -39,4 +39,5 @@ dependencies {
     compile 'com.google.code.gson:gson:2.8.0'
     compile 'com.android.support:support-v13:25.1.0'
     compile 'com.miguelcatalan:materialsearchview:1.4.0'
+    compile 'com.zhy:flowlayout-lib:1.0.3'
 }

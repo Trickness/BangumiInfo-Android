@@ -1,0 +1,33 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <!-- Bottom 2dp Shadow ：底部阴影层-->
+    <item>
+        <shape android:shape="rectangle" >
+            <!-- from top to bottom -->
+            <gradient
+                android:angle="135"
+                android:centerColor="#EEEEEE"
+                android:endColor="#FFFFFF"
+                android:startColor="#CCCCCC" />
+            <corners android:radius="4dp" />
+        </shape>
+    </item>
+
+    <!-- White Top color：顶部层 -->
+    <item
+        android:bottom="3.4dp"
+        android:left="-1dp"
+        android:right="2.4dp"
+        android:top="0dp">
+        <shape android:shape="rectangle" >
+            <solid android:color="@color/colorDetailFront" />
+            <corners android:radius="4dp" />
+            <padding
+                android:bottom="9dp"
+                android:left="9dp"
+                android:right="9dp"
+                android:top="9dp" />
+        </shape>
+    </item>
+
+</layer-list>

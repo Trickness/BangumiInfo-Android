@@ -5,4 +5,19 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorItemBase">#EEEEEE</color>
     <color name="colorAppTitle">#EEEEEE</color>
+    <color name="account_line">#000000</color>
+    <color name="colorTag">#EFEFEF</color>
+    <color name="colorTagText">#008899</color>
+    <color name="colorTagBorder">#AAAAAA</color>
+    <color name="colorDetailFront">#FFFFFF</color>
+    <color name="colorDetailBack">#EEEEEE</color>
+    <color name="colorEpisodeUnwatchedBorder">#00A8FF</color>
+    <color name="colorEpisodeUnwatchedText">#0066CC</color>
+    <color name="colorEpisodeUnwatchedBackground">#DAEAFF</color>
+    <color name="colorEpisodeUnavailableBorder">#b6b6b6</color>
+    <color name="colorEpisodeUnavailableText">#909090</color>
+    <color name="colorEpisodeUnavailableBackground">#e0e0e0</color>
+    <color name="colorEpisodeWatchedBorder">#1175a8</color>
+    <color name="colorEpisodeWatchedText">#FFFFFF</color>
+    <color name="colorEpisodeWatchedBackground">#4897ff</color>
 </resources>

@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/colorDetailBack">
     <ImageView
-        android:id="@+id/ImageDetailCover"
+        android:id="@+id/imageDetailCoverBack"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
-        android:background="@color/colorItemBase"/>
-    <LinearLayout
+        android:layout_height="140dp" />
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/colorPrimaryDark">
-    </LinearLayout>
-</LinearLayout>
+        android:scrollbars="none">
+        <LinearLayout
+            android:id="@+id/detail_card_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

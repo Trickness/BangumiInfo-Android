@@ -122,6 +122,7 @@ public class SearchResultFragment extends Fragment {
             itemView.setClickable(true);
             itemView.setBackgroundResource(R.drawable.rect_gray);
             itemView.setOnClickListener(this);
+            itemView.setBackgroundColor(getResources().getColor(R.color.colorDetailFront));
         }
         public void setParent(ItemsAdapter adapter){
             mParent = adapter;

@@ -2,11 +2,13 @@ package moe.exmagic.tricks.bangumiinfo.utils;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -126,6 +129,12 @@ public class WebSpider {
         }
         @Override
         void UpdateUI(WebSpider.SearchResult result) {
+            if(fm == null)
+                return;
+            if(result == null){
+                fm.updateUI(null);
+                return;
+            }
             if(result.currentPage == 1)
                 fm.updateUI(result);
             else
@@ -143,19 +152,25 @@ public class WebSpider {
                 return null;
             DataType.DetailItem result = new DataType.DetailItem();
             // parse summary
-            if (doc.getElementById("subject_summary") != null)
-                result.Summary = doc.getElementById("subject_summary").text();
+            if (doc.getElementById("subject_summary") != null) {
+                result.Summary = doc.getElementById("subject_summary").html().replace("<br />","");
+            }
             // parse episode
+            String epType = "";
             if (doc.getElementsByClass("subject_prg").size() == 1){
-                result.Eps = new HashMap<>();
+                result.Eps = new TreeMap<>();
                 Elements elements = doc.getElementsByClass("prg_list").first().children();
                 DataType.EpItem episode;
                 for(Element e : elements){
                     episode = new DataType.EpItem();
                     e = e.child(0);
 
+                    if(e.tagName() == "span"){
+                        epType = e.text() + " ";
+                        continue;
+                    }
                     episode.EpID = e.attr("href").substring(4);
-                    episode.Episode = e.text();
+                    episode.Episode = epType + e.text();
                     episode.Title = e.attr("title");
                     episode.isAvailable = e.attr("class").endsWith("r");
 
@@ -248,7 +263,8 @@ public class WebSpider {
         }
         @Override
         void UpdateUI(DataType.DetailItem result) {
-            mFragment.updateUI(result);
+            if(mFragment != null)
+                mFragment.updateUI(result);
         }
     }
 
@@ -273,6 +289,7 @@ public class WebSpider {
                 doc = Jsoup.connect(TargetUrl)
                         .cookies(mParent.Cookies)
                         .timeout(3000)
+                        .parser(Parser.xmlParser())
                         .get();
             }catch (IOException e){
                 mParent.unlock();
