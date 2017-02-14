@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_marginLeft="@dimen/activity_horizontal_margin"
+    android:layout_marginRight="@dimen/activity_horizontal_margin"
+    android:layout_marginBottom="@dimen/activity_vertical_margin"
+    android:background="#FFFFFF"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="6dp"
+        android:layout_marginRight="6dp"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/blog_compact_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:textSize="21sp"
+            android:textStyle="bold"
+            android:text="和名为现实的怪物战斗的人们"/>
+        <TextView
+            android:layout_marginLeft="12dp"
+            android:layout_marginStart="12dp"
+            android:id="@+id/blog_compact_submit_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="8sp"
+            android:text="by windchaos 2011-4-15 05:03 (+1)"/>
+        <TextView
+            android:layout_marginLeft="12dp"
+            android:layout_marginStart="12dp"
+            android:id="@+id/blog_compact_preview"
+            android:layout_marginTop="2dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="4"
+            android:textSize="12sp"
+            android:textColor="#AAAAAA"
+            android:text="前两天在扫新番的时候把一直躺在硬盘里舍不得看的《Bakuman》动画最后一话看完，之所以没有第一时间看是怕看完后这季找不到这样一部让我每个周末看完后周一又能补充完梦想值干劲满满去工作的动画了，还是那句话NHK教育台播放的动画永远是让人充满梦想，紧跟着《Maj ..."/>
+    </LinearLayout>
+</LinearLayout>

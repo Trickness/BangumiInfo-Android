@@ -3,9 +3,6 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="colorItemBase">#EEEEEE</color>
-    <color name="colorAppTitle">#EEEEEE</color>
-    <color name="account_line">#000000</color>
     <color name="colorTag">#EFEFEF</color>
     <color name="colorTagText">#008899</color>
     <color name="colorTagBorder">#AAAAAA</color>
@@ -20,4 +17,5 @@
     <color name="colorEpisodeWatchedBorder">#1175a8</color>
     <color name="colorEpisodeWatchedText">#FFFFFF</color>
     <color name="colorEpisodeWatchedBackground">#4897ff</color>
+    <color name="colorScoreText">#E800A4</color>
 </resources>

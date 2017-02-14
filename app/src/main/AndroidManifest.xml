@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="moe.exmagic.tricks.bangumiinfo">
+    package="moe.exmagic.tricks.banguminews">
 
     <application
         android:allowBackup="true"
@@ -8,19 +8,20 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"
-            android:screenOrientation="portrait">
+        <activity android:name=".ActivityMain">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <meta-data android:name="android.app.searchable"
-                android:resource="@xml/searchable" />
         </activity>
-        <activity android:name=".ItemDetailFragment"
-            android:screenOrientation="portrait">
-        </activity>
+        <activity android:name=".ActivitySearch"/>
+        <activity android:name=".ActivityItemDetail"
+            android:theme="@style/ImageTranslucentTheme"/>
+        <activity android:name=".ActivityBlogList"/>
+        <activity android:name=".ActivityBlogView"/>
+        <activity android:name=".ActivityCommentList"/>
+        <activity android:name=".ActivityCharactersList"/>
+        <activity android:name=".ActivityCharacterView"/>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
-
 </manifest>
