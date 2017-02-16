@@ -60,6 +60,132 @@ public class WebSpider {
         abstract RetType    ParseDOM(Document doc);
         abstract void       UpdateUI(RetType result);
     }
+    static abstract class ElementParser{
+        static ArrayList<String>        ParseTags(Element E) {
+            ArrayList<String> result = new ArrayList<>();
+            if(E != null){
+                E = E.getElementsByClass("inner").first();
+                for(Element e : E.getElementsByTag("a")){
+                    result.add(e.text());
+                }
+            }
+            return result;
+        }
+        static TreeMap<String,EpItem>   ParseEps(Element E){
+            TreeMap<String,EpItem> result = new TreeMap();
+            if(E == null){
+                return result;
+            }
+
+            String epType = "";
+            Elements elements = E.getElementsByClass("prg_list").first().children();
+            EpItem episode;
+            for(Element e : elements){
+                episode = new EpItem();
+                e = e.child(0);
+
+                if(e.tagName() == "span"){
+                    epType = e.text() + " ";
+                    continue;
+                }
+                episode.EpID = e.attr("href").substring(4);
+                episode.Episode = epType + e.text();
+                episode.Title = e.attr("title");
+                episode.isAvailable = e.attr("class").endsWith("r");
+
+                result.put(episode.Episode,episode);
+            }
+
+            return result;
+        }
+        static String                   ParseSummary(Element E){
+            if(E == null){
+                return "";
+            }
+            return E.getElementById("subject_summary").html().replace("<br />","").replace("&nbsp;","");
+        }
+        static ArrayList<CharacterItem> ParseCharactersCompact(Element E){
+            ArrayList<CharacterItem> result = new ArrayList<>();
+            if(E == null){
+                return result;
+            }
+            CharacterItem character;
+            for (Element e : E.getElementById("browserItemList").children()){
+                character = new CharacterItem();
+                character.CommentNumber = e.getElementsByClass("fade rr").first().text();
+                character.CharacterName = e.getElementsByClass("userImage").first().parent().text();
+                character.CharacterID = Integer.parseInt(e.getElementsByClass("userImage").first().parent().attr("href").substring(11));
+                if(e.getElementsByClass("tip").size() == 1){
+                    character.CharacterTranslation = e.getElementsByClass("tip").first().text();
+                }
+                character.CharacterHeaderUrl = WebSpider.PROTOCOL + e.getElementsByClass("userImage").first().children().first().attr("src");
+
+                e = e.getElementsByClass("tip_j").first();
+
+                character.CharacterType = e.child(0).child(0).text();
+                if(e.getElementsByTag("a").size() == 1){
+                    character.CVInfo = new ArrayList<>();
+                    PersonItem person = new PersonItem();
+                    person.Name = e.getElementsByTag("a").first().text();
+                    person.PersonID = Integer.parseInt(e.getElementsByTag("a").first().attr("href").substring(8));
+                    character.CVInfo.add(person);
+                }
+                result.add(character);
+            }
+            return result;
+        }
+        static ArrayList<Integer>           ParseVotes(Element E){
+            ArrayList<Integer> result = new ArrayList<>();
+            for(int i = 0; i < 11 ; i++){
+                result.add(0);
+            }
+            int tempI = 10;
+            for(Element e : E.children()){
+                result.set(tempI,Integer.parseInt(e.getElementsByClass("count").text().replace("(","").replace(")","")));
+                tempI --;
+            }
+            return result;
+        }
+        static HashMap<String,ArrayList<String>> ParseKVInfo(Element E){
+            HashMap<String,ArrayList<String>> result = new HashMap<>();
+            ArrayList<String> value;
+            String key;
+            for (Element e : E.children()){
+                for (String s : e.text().split(";")){
+                    value = new ArrayList<>();
+                    String[] ss = s.split(":");
+                    key = ss[0];
+                    Collections.addAll(value, ss[1].split("、"));
+                    result.put(key,value);
+                }
+            }
+            return result;
+        }
+        static ArrayList<CommentItem>   ParseCommentWithVote(Element E){
+            ArrayList<CommentItem> result = new ArrayList<>();
+            if(E == null)
+                return result;
+            for(Element e : E.children()){
+                CommentItem comment = new CommentItem();
+                UserItem user = new UserItem();
+                user.UserID = e.child(0).attr("href").substring(6);
+                user.UserHeaderUrl = e.child(0).child(0).attr("style").substring(22);
+                user.UserHeaderUrl = "http:" + user.UserHeaderUrl.substring(0,user.UserHeaderUrl.length()-1).replace("/s/","/l/");
+                user.UserNickname = e.getElementsByClass("l").first().text();
+                comment.User = user;
+                Element starE = e.getElementsByClass("starsinfo").first();
+                if(starE != null){
+                    comment.Score = Integer.parseInt(starE.attr("class").substring(6,8).replace(" ",""));
+                }else{
+                    comment.Score = -1;
+                }
+                comment.SubmitDatetime = e.getElementsByClass("grey").first().text().substring(2);
+                comment.Comment = e.getElementsByTag("p").first().text();
+                result.add(comment);
+            }
+            return result;
+        }
+    }
     private class SearchResultParser extends DOMParser<SearchResult>{
         private int currentPage;
         private String searchType;
@@ -158,79 +284,16 @@ public class WebSpider {
             if(doc == null)
                 return null;
             DetailItem result = new DetailItem();
-            // parse summary
-            if (doc.getElementById("subject_summary") != null) {
-                result.Summary = doc.getElementById("subject_summary").html().replace("<br />","").replace("&nbsp;","");
-            }
+            // parse summar
+            result.Summary = ElementParser.ParseSummary(doc.getElementById("subject_summary"));
             // parse episode
-            String epType = "";
-            if (doc.getElementsByClass("subject_prg").size() == 1){
-                result.Eps = new TreeMap<>();
-                Elements elements = doc.getElementsByClass("prg_list").first().children();
-                EpItem episode;
-                for(Element e : elements){
-                    episode = new EpItem();
-                    e = e.child(0);
-
-                    if(e.tagName() == "span"){
-                        epType = e.text() + " ";
-                        continue;
-                    }
-                    episode.EpID = e.attr("href").substring(4);
-                    episode.Episode = epType + e.text();
-                    episode.Title = e.attr("title");
-                    episode.isAvailable = e.attr("class").endsWith("r");
-
-                    result.Eps.put(episode.Episode,episode);
-                }
-            }
+            result.Eps = ElementParser.ParseEps(doc.getElementsByClass("subject_prg").first());
             // parse tags
-            Element tmp = doc.getElementsByClass("subject_tag_section").first();
-            if(tmp != null){
-                result.Tags = new ArrayList<>();
-                tmp = tmp.getElementsByClass("inner").first();
-                for(Element e : tmp.getElementsByTag("a")){
-                    result.Tags.add(e.text());
-                }
-            }
+            result.Tags = ElementParser.ParseTags(doc.getElementsByClass("subject_tag_section").first());
             //parse characters
-            if(doc.getElementById("browserItemList") != null){
-                result.CharactersList = new ArrayList<>();
-                CharacterItem character;
-                for (Element e : doc.getElementById("browserItemList").children()){
-                    character = new CharacterItem();
-                    character.CommentNumber = e.getElementsByClass("fade rr").first().text();
-                    character.CharacterName = e.getElementsByClass("userImage").first().parent().text();
-                    character.CharacterID = Integer.parseInt(e.getElementsByClass("userImage").first().parent().attr("href").substring(11));
-                    if(e.getElementsByClass("tip").size() == 1){
-                        character.CharacterTranslation = e.getElementsByClass("tip").first().text();
-                    }
-                    character.CharacterHeaderUrl = WebSpider.PROTOCOL + e.getElementsByClass("userImage").first().children().first().attr("src");
-
-                    e = e.getElementsByClass("tip_j").first();
-
-                    character.CharacterType = e.child(0).child(0).text();
-                    if(e.getElementsByTag("a").size() == 1){
-                        character.CVInfo = new ArrayList<>();
-                        PersonItem person = new PersonItem();
-                        person.Name = e.getElementsByTag("a").first().text();
-                        person.PersonID = Integer.parseInt(e.getElementsByTag("a").first().attr("href").substring(8));
-                        character.CVInfo.add(person);
-                    }
-                    result.CharactersList.add(character);
-                }
-            }
+            result.CharactersList = ElementParser.ParseCharactersCompact(doc.getElementById("browserItemList"));
             // parse votes
-            result.ScoreDetail = new ArrayList<>();
-            for(int i = 0; i < 11 ; i++){
-                result.ScoreDetail.add(0);
-            }
-            Element eVotesBox = doc.getElementById("ChartWarpper").getElementsByClass("horizontalChart").first();
-            int tempI = 10;
-            for(Element e : eVotesBox.children()){
-                result.ScoreDetail.set(tempI,Integer.parseInt(e.getElementsByClass("count").text().replace("(","").replace(")","")));
-                tempI --;
-            }
+            result.ScoreDetail = ElementParser.ParseVotes(doc.getElementById("ChartWarpper").getElementsByClass("horizontalChart").first());
             // parse blog
             if(doc.getElementById("entry_list") != null){
                 result.Blogs = new ArrayList<>();
@@ -268,43 +331,9 @@ public class WebSpider {
                 }
             }
             // parse KV-info
-            result.KVInfo = new HashMap<>();
-            ArrayList<String> value;
-            String key;
-            for (Element e : doc.getElementById("infobox").children()){
-                for (String s : e.text().split(";")){
-                    value = new ArrayList<>();
-                    String[] ss = s.split(":");
-                    key = ss[0];
-                    Collections.addAll(value, ss[1].split("、"));
-                    result.KVInfo.put(key,value);
-                }
-            }
+            result.KVInfo = ElementParser.ParseKVInfo(doc.getElementById("infobox"));
             // parse Comments
-            result.Comments = new ArrayList<>();
-            for (Element e : doc.getElementById("comment_box").children()){
-                CommentItem comment = new CommentItem();
-                UserItem user = new UserItem();
-                user.UserID = e.child(0).attr("href").substring(6);
-                user.UserHeaderUrl = e.child(0).child(0).attr("style").substring(22);
-                user.UserHeaderUrl = "http:" + user.UserHeaderUrl.substring(0,user.UserHeaderUrl.length()-1).replace("/s/","/l/");
-                user.UserNickname = e.getElementsByClass("l").first().text();
-
-                comment.User = user;
-
-                Element starE = e.getElementsByClass("starsinfo").first();
-                if(starE != null){
-                    comment.Score = Integer.parseInt(starE.attr("class").substring(6,8).replace(" ",""));
-                }else{
-                    comment.Score = -1;
-                }
-
-                comment.SubmitDatetime = e.getElementsByClass("grey").first().text().substring(2);
-
-                comment.Comment = e.getElementsByTag("p").first().text();
-
-                result.Comments.add(comment);
-            }
+            result.Comments = ElementParser.ParseCommentWithVote(doc.getElementById("comment_box"));
             // TODO: Parse Music Item
             return result;
         }
@@ -384,29 +413,7 @@ public class WebSpider {
             if(doc == null){
                 return null;
             }
-            ArrayList<CommentItem> result = new ArrayList<>();
-            if(doc.getElementById("comment_box") == null){
-                return result;
-            }
-            for (Element e : doc.getElementById("comment_box").children()){
-                CommentItem comment = new CommentItem();
-                UserItem user = new UserItem();
-                user.UserID = e.child(0).attr("href").substring(6);
-                user.UserHeaderUrl = e.child(0).child(0).attr("style").substring(22);
-                user.UserHeaderUrl = "http:" + user.UserHeaderUrl.substring(0,user.UserHeaderUrl.length()-1).replace("/s/","/l/");
-                user.UserNickname = e.getElementsByClass("l").first().text();
-                comment.User = user;
-                Element starE = e.getElementsByClass("starsinfo").first();
-                if(starE != null){
-                    comment.Score = Integer.parseInt(starE.attr("class").substring(6,8).replace(" ",""));
-                }else{
-                    comment.Score = -1;
-                }
-                comment.SubmitDatetime = e.getElementsByClass("grey").first().text().substring(2);
-                comment.Comment = e.getElementsByTag("p").first().text();
-                result.add(comment);
-            }
-            return result;
+            return ElementParser.ParseCommentWithVote(doc.getElementById("comment_box"));
         }
         @Override
         void UpdateUI(ArrayList<CommentItem> result) {
