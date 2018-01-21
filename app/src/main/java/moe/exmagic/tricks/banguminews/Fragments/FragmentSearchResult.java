@@ -172,7 +172,7 @@ public class FragmentSearchResult extends Fragment {
             Intent intent = new Intent(getContext(), ActivityItemDetail.class);
             Bundle bundle = new Bundle();
             bundle.putSerializable(ActivityItemDetail.EXTRA_ITEM_DETAIL_BASEITEM,pBaseItem);
-            bundle.putSerializable(ActivityItemDetail.EXTRA_WEBSPIDER_COOKIES,WebSpider.get(getContext()).Cookies);
+            bundle.putSerializable(ActivityItemDetail.EXTRA_WEBSPIDER_COOKIES,WebSpider.get(getContext()).WebCookies);
             intent.putExtra(ActivityItemDetail.EXTRA_ITEM_DETAIL,bundle);
             startActivity(intent);
         }

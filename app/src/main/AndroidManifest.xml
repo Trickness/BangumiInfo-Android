@@ -22,6 +22,8 @@
         <activity android:name=".ActivityCommentList"/>
         <activity android:name=".ActivityCharactersList"/>
         <activity android:name=".ActivityCharacterView"/>
+        <activity android:name=".ActivityPersonalInfo"/>
+
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>

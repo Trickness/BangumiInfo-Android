@@ -40,7 +40,7 @@ public class ActivityItemDetail extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         mBaseItem = (SearchResultItem)getIntent().getExtras().getBundle(EXTRA_ITEM_DETAIL).getSerializable(EXTRA_ITEM_DETAIL_BASEITEM);
-        WebSpider.SerializableMap map = WebSpider.get(this).Cookies;
+        WebSpider.SerializableMap map = WebSpider.get(this).WebCookies;
         setContentView(R.layout.activity_item_detail);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.item_detail_toolbar);
         setActionBar(toolbar);

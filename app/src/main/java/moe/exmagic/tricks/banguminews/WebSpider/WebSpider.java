@@ -1,7 +1,11 @@
 package moe.exmagic.tricks.banguminews.WebSpider;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.util.Log;
+
+
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -28,12 +32,16 @@ import moe.exmagic.tricks.banguminews.ActivityBlogList;
 import moe.exmagic.tricks.banguminews.Fragments.FragmentSearchResult;
 import moe.exmagic.tricks.banguminews.Utils.BgmDataType.*;
 
+
+// 第三方库
+import com.alibaba.fastjson.*;
 /**
  * Created by SternW Zhang on 17-1-4.
  * WebSpider
  */
 
 public class WebSpider {
+    public static String APP_NAME          = "BangumiNewS";
     public static String SEARCH_ALL        = "all";
     public static String SEARCH_BANGUMI    = "2";
     public static String SEARCH_BOOK       = "1";
@@ -41,9 +49,11 @@ public class WebSpider {
     public static String SEARCH_MUSIC      = "3";
     public static String SEARCH_3DIM       = "6";
     public static String SEARCH_PERSON     = "person";
-    public static String BASE_SITE         = "http://bangumi.tv/";
+    public static String BASE_SITE         = "http://bgm.tv/";
+    public static String BAST_API_SITE     = "https://api.bgm.tv/";
+    public static String LOGIN_URL         = "FollowTheRabbit";
     public static String USER_AGENT        = "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0\\r\\n";
-    public static String PROTOCOL      = "http:";
+    public static String PROTOCOL          = "http:";
 
     public static int ITEM_TYPE_BANGUMI     = 1;
     public static int ITEM_TYPE_BOOK        = 2;
@@ -51,7 +61,8 @@ public class WebSpider {
     public static int ITEM_TYPE_GAME        = 4;
     public static int ITEM_TYPE_3DIM        = 6;
 
-    public SerializableMap  Cookies     = new SerializableMap();
+    public SerializableMap  WebCookies = new SerializableMap();
+    public SerializableMap  APICookies  = new SerializableMap();
 
     /*
     *  私有方法
@@ -60,6 +71,7 @@ public class WebSpider {
         abstract RetType    ParseDOM(Document doc);
         abstract void       UpdateUI(RetType result);
     }
+    //  页面分析器
     static abstract class ElementParser{
         static ArrayList<String>        ParseTags(Element E) {
             ArrayList<String> result = new ArrayList<>();
@@ -470,7 +482,14 @@ public class WebSpider {
         }
     }
 
-    private class AsyncTaskNetwork extends  AsyncTask<Void,Void,Document>{
+    // API控制
+    static abstract class APIParser{
+        abstract JSONObject    ParseAPI(JSONObject json);
+        abstract void       UpdateUI(JSONObject json);
+    }
+
+    // 网络部分
+    private static class AsyncTaskNetwork extends  AsyncTask<Void,Void,Document>{
         private WebSpider   mParent;
         private DOMParser<SearchResult> mParser;
         private String TargetUrl;
@@ -483,16 +502,17 @@ public class WebSpider {
         protected Document doInBackground(Void... params) {
             Document doc;
             try {
-                if(mParent.Cookies.map == null){
-                    mParent.Cookies.map = Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute().cookies();
-                    if(mParent.Cookies == null)
+                if(mParent.WebCookies.map == null){
+                    mParent.WebCookies.map = Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute().cookies();
+                    if(mParent.WebCookies == null)
                         return null;
                 }
-                doc = Jsoup.connect(TargetUrl)
-                        .cookies(mParent.Cookies.map)
+                Connection con = Jsoup.connect(TargetUrl)
+                        .cookies(mParent.WebCookies.map)
                         .timeout(3000)
-                        .parser(Parser.xmlParser())
-                        .get();
+                        .parser(Parser.xmlParser());
+                doc = con.get();
+                mParent.WebCookies.map = con.response().cookies();
             }catch (IOException e){
                 mParent.unlock();
                 return null;
@@ -505,7 +525,7 @@ public class WebSpider {
             mParser.UpdateUI(mParser.ParseDOM(doc));
         }
     }
-    private class FetchResponse extends AsyncTask<WebSpider,Void,Void> {
+    private static class FetchResponse extends AsyncTask<WebSpider,Void,Void> {
         @Override
         protected Void doInBackground(WebSpider... params){
             WebSpider parent = params[0];
@@ -515,10 +535,82 @@ public class WebSpider {
             }catch (IOException e){
                 return null;
             }
-            parent.Cookies.map = res.cookies();
+            parent.WebCookies.map = res.cookies();
             return null;
         }
     }
+    private static class AsyncLogin extends AsyncTask<Void, Void, JSONObject>{
+        OnLoginListener mListener;
+        String mUsername;
+        String mPassword;
+        String mB64Key;
+        private AsyncLogin(String username, String password, String b64Key, OnLoginListener listener){
+            mListener = listener;
+            mUsername = username;
+            mPassword = password;
+            mB64Key = b64Key;
+        }
+        @Override
+        protected JSONObject doInBackground(Void... params){
+            while(sWebSpider.mAuthStatus == -1){         // delay
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException e){
+                    Log.d("DEBUG-KERNEL","INTERRUPTED");
+                }
+            }
+            sWebSpider.mAuthStatus = -1; // lock
+            JSONObject data;
+            Connection con = Jsoup.connect("http://api.bgm.tv/auth?source=onAir").timeout(5000);
+            con.header("Accept","application/json");
+            if(sWebSpider.WebCookies.map != null)
+                con.cookies(sWebSpider.WebCookies.map);
+            con.ignoreContentType(true);
+            if(mB64Key == null) {
+                con.data("username", mUsername);
+                con.data("password", mPassword);
+            }else{
+                con.header("Authorization",mB64Key);
+            }
+            try{
+                String text;
+                if(mB64Key == null) {
+                     text = con.post().body().text();
+                }else{
+                    text = con.get().body().text();
+                }
+                Log.d("DEBUG-KERNEL",text);
+                data = JSONObject.parseObject(text);
+                 //data = new JSONObject(con.post().body().text());
+            }catch (Exception e){
+                Log.d("DEBUG-KERNEL",e.toString());
+                return null;
+            }
+            sWebSpider.APICookies.map = con.response().cookies();
+            return data;
+        }
+        @Override
+        protected void onPostExecute(JSONObject data){
+            if(data == null){
+                sWebSpider.mAuthStatus = 0;
+                mListener.onBusy();
+                return;
+            }
+            int status;
+            if(data.containsKey("error")){
+                status = 0;
+            }else{
+                status = 1;
+            }
+            sWebSpider.mAuthStatus = status;
+            sWebSpider.mAuthInfo = data;
+
+            if(status == 0) mListener.onFailed(data);
+            if(status == 1) mListener.onSuccess(data);
+            if(status == -1) mListener.onBusy();
+        }
+    }
+
 
     private int syn_lock = 0;
     private boolean lock(){
@@ -548,7 +640,7 @@ public class WebSpider {
         public ArrayList<CommentItem> items = new ArrayList<>();
     }
     public static class SerializableMap implements Serializable{
-        public Map<String,String> map = null;
+        public Map<String,String> map = new HashMap<>();
     }
     /*
     * 公共方法
@@ -589,22 +681,28 @@ public class WebSpider {
     public void GetCharacterList(String Url, ActivityCharactersList activity){
         new AsyncTaskNetwork(this, new CharacterListParser(activity),Url).execute();
     }
-    public static WebSpider get(Context context){
+
+    public static WebSpider get(Context context) {
         if(sWebSpider == null){
             sWebSpider = new WebSpider(context);
-            sWebSpider.refreshCookies();
+            // INIT
+            SharedPreferences sp = context.getSharedPreferences(WebSpider.NAME_WS_CONFIG,0);
+
+            String web_cookies  = sp.getString(WebSpider.CONFIG_KEY_WEB_COOKIES,"");
+            String api_cookies  = sp.getString(WebSpider.CONFIG_KEY_API_COOKIES,"");
+            String b64Key       = sp.getString(WebSpider.CONFIG_KEY_AUTH_BASIC,"");
+            String basicInfo    = sp.getString(WebSpider.CONFIG_KEY_BASIC_INFO,"");
+
+            if(!web_cookies.equals(""))
+                sWebSpider.WebCookies.map = JSON.parseObject(web_cookies,new TypeReference<Map<String, String>>(){});
+            if(!api_cookies.equals(""))
+                sWebSpider.APICookies.map = JSON.parseObject(api_cookies,new TypeReference<Map<String, String>>(){});
+            if(!b64Key.equals(""))
+                sWebSpider.mAuthB64Key = b64Key;
+            if(!basicInfo.equals(""))
+                sWebSpider.mAuthBasicInfo = JSON.parseObject(basicInfo);
         }
         return sWebSpider;
-    }
-    public static WebSpider getWithCookies(Context context, SerializableMap cookies){
-        if(sWebSpider == null){
-            sWebSpider = new WebSpider(context);
-        }
-        sWebSpider.Cookies = cookies;
-        return sWebSpider;
-    }
-    public void refreshCookies(){
-        new FetchResponse().execute(this);      // set cookies
     }
     public static String getStrType(int type){
         String strType = "" + type;
@@ -621,5 +719,39 @@ public class WebSpider {
         }
         return "";
     }
+
+
+    // PROTOCOL LAYER
+
+    protected int mAuthStatus = 0;          // 0 => false
+                                            // 1 => true
+                                            // -1 => in processing
+
+    private String mAuthB64Key          = null;
+    private JSONObject mAuthBasicInfo   = null;
+
+
+    public static String NAME_WS_CONFIG = "name_ws_config";
+    public static String CONFIG_KEY_BASIC_INFO  = "config_key_basic_info";
+    public static String CONFIG_KEY_AUTH_TOKEN  = "config_key_auth_token";
+    public static String CONFIG_KEY_AUTH_BASIC  = "config_key_auth_basic";
+    public static String CONFIG_KEY_WEB_COOKIES = "config_key_web_cookies";
+    public static String CONFIG_KEY_API_COOKIES = "config_key_api_cookies";
+
+    protected JSONObject mAuthInfo = new JSONObject();
+
+    public void Auth(String email, String password,String b64Key, OnLoginListener listener){
+        if(mAuthStatus != -1)
+            new AsyncLogin(email,password,b64Key,listener).execute();
+    }
+    public void CheckAuthStatus(OnLoginListener listener){
+        if(mAuthStatus != -1 && mAuthB64Key != null)
+            new AsyncLogin(null,null,mAuthB64Key,listener).execute();
+    }
+
+    public int AuthStatus(){
+        return mAuthStatus;
+    }
+
 }
 

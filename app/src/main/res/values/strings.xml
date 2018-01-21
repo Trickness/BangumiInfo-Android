@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">BangumiNewS</string>
+    <string name="login_title">登陆至Bangumi</string>
+    <string name="login_email">请输入你的Email</string>
+    <string name="login_password">请输入你的密码</string>
+    <string name="login_button">⭐Down To The Rabbit Hole⭐</string>
 </resources>

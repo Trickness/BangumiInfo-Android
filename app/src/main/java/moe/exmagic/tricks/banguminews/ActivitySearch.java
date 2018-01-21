@@ -37,6 +37,7 @@ public class ActivitySearch extends FragmentActivity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setTitle("Search : " + mSearchKeyWord);
 
+
         ViewPager viewPager = (ViewPager) findViewById(R.id.result_list_container);
         TabLayout tabLayout = (TabLayout) findViewById(R.id.search_type_tabs);
         if (viewPager != null) {

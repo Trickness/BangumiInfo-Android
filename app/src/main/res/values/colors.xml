@@ -18,4 +18,5 @@
     <color name="colorEpisodeWatchedText">#FFFFFF</color>
     <color name="colorEpisodeWatchedBackground">#4897ff</color>
     <color name="colorScoreText">#E800A4</color>
+    <color name="colorBangumiMain">#f09199</color>
 </resources>
