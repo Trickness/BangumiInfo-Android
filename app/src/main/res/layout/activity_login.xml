@@ -36,13 +36,15 @@
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp">
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_weight="4"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:text="@string/login_email"
                         android:paddingRight="16dp"/>
                     <android.support.design.widget.TextInputEditText
+                        android:layout_weight="6"
                         android:id="@+id/login_input_email"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
             </android.support.design.widget.TextInputLayout>
@@ -53,15 +55,47 @@
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="20dp">
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_weight="4"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:text="@string/login_password"
                     android:paddingRight="22dp"/>
                 <android.support.design.widget.TextInputEditText
                     android:id="@+id/login_input_password"
-                    android:layout_width="match_parent"
+                    android:layout_weight="6"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp">
+                <TextView
+                    android:layout_weight="4"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/login_captcha"
+                    android:paddingRight="22dp"/>
+                <android.support.design.widget.TextInputEditText
+                    android:layout_weight="3"
+                    android:layout_width="0dp"
+                    android:clickable="true"
+                    android:id="@+id/login_input_captcha"
+                    android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="3"
+                    android:layout_height="match_parent"
+                    android:gravity="center">
+                    <ImageView
+                        android:id="@+id/login_captcha_view"
+                        android:layout_width="80dp"
+                        android:layout_height="30dp" />
+                </LinearLayout>
+
             </LinearLayout>
             <Button
                 android:id="@+id/login_input_submit"

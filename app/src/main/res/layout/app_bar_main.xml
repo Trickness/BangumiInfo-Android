@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    tools:context=".ActivityMain">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        android:theme="@style/AppTheme.AppBarOverlay">
+
         <android.support.v7.widget.Toolbar
             android:id="@+id/main_activity_toolbar"
             android:layout_width="match_parent"
@@ -23,21 +25,14 @@
             android:layout_marginTop="-56dp" />
     </android.support.design.widget.AppBarLayout>
 
-    <com.hjm.bottomtabbar.BottomTabBar
-        android:id="@+id/main_bottom_bar"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:tab_divider_background="@color/colorBangumiMain"
-        app:tab_divider_height="5dp"
-        app:tab_font_size="6sp"
-        app:tab_img_font_padding="0dp"
-        app:tab_img_height="30dp"
-        app:tab_selected_color="@color/colorBangumiMain"
-        app:tab_unselected_color="#FFFFFF"></com.hjm.bottomtabbar.BottomTabBar>
+    <include layout="@layout/content_main" />
 
-    <android.support.design.widget.NavigationView
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        />
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        app:srcCompat="@android:drawable/ic_dialog_email" />
 
-</android.support.v4.widget.DrawerLayout>
+</android.support.design.widget.CoordinatorLayout>
