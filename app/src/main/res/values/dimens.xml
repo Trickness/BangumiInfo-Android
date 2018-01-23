@@ -6,4 +6,10 @@
     <dimen name="card_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="list_item_avatar_size">40dp</dimen>
+
+    <dimen name="nav_header_vertical_spacing">32dp</dimen>
+    <dimen name="nav_header_height">176dp</dimen>
+
+    <dimen name="topic_compact_header_size">64dp</dimen>
+    <dimen name="topic_compact_title_size">21sp</dimen>
 </resources>
