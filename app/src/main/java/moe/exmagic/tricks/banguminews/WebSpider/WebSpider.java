@@ -2,7 +2,10 @@ package moe.exmagic.tricks.banguminews.WebSpider;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.util.Base64;
 import android.util.Log;
 
 
@@ -16,10 +19,13 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,6 +35,7 @@ import moe.exmagic.tricks.banguminews.ActivityCommentList;
 import moe.exmagic.tricks.banguminews.ActivityItemDetail;
 import moe.exmagic.tricks.banguminews.ActivityBlogView;
 import moe.exmagic.tricks.banguminews.ActivityBlogList;
+import moe.exmagic.tricks.banguminews.Fragments.FragmentHome;
 import moe.exmagic.tricks.banguminews.Fragments.FragmentSearchResult;
 import moe.exmagic.tricks.banguminews.Utils.BgmDataType.*;
 
@@ -49,11 +56,11 @@ public class WebSpider {
     public static String SEARCH_MUSIC      = "3";
     public static String SEARCH_3DIM       = "6";
     public static String SEARCH_PERSON     = "person";
-    public static String BASE_SITE         = "http://bgm.tv/";
+    public static String BASE_SITE         = "https://bgm.tv/";
     public static String BAST_API_SITE     = "https://api.bgm.tv/";
     public static String LOGIN_URL         = "FollowTheRabbit";
     public static String USER_AGENT        = "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0\\r\\n";
-    public static String PROTOCOL          = "http:";
+    public static String PROTOCOL          = "https:";
 
     public static int ITEM_TYPE_BANGUMI     = 1;
     public static int ITEM_TYPE_BOOK        = 2;
@@ -61,13 +68,13 @@ public class WebSpider {
     public static int ITEM_TYPE_GAME        = 4;
     public static int ITEM_TYPE_3DIM        = 6;
 
-    public SerializableMap  WebCookies = new SerializableMap();
-    public SerializableMap  APICookies  = new SerializableMap();
+    private SerializableMap  WebCookies = new SerializableMap();
+    private SerializableMap  APICookies  = new SerializableMap();
 
     /*
     *  私有方法
     */
-    public static abstract class DOMParser<RetType>{
+    private static abstract class DOMParser<RetType>{
         abstract RetType    ParseDOM(Document doc);
         abstract void       UpdateUI(RetType result);
     }
@@ -328,10 +335,10 @@ public class WebSpider {
             // parse topics
             if(doc.getElementsByTag("tbody").size() == 1){
                 result.Topics = new ArrayList<>();
-                TopicItem topic;
+                SubjectTopicItem topic;
                 for (int i = 0; i < doc.getElementsByTag("tbody").first().children().size() - 1; i++){
                     Element e = doc.getElementsByTag("tbody").first().child(i);
-                    topic = new TopicItem();
+                    topic = new SubjectTopicItem();
                     topic.Title = e.child(0).child(0).text();
                     topic.TopicID = e.child(0).child(0).attr("href").substring(15);
                     topic.Submitter = new UserItem();
@@ -481,12 +488,53 @@ public class WebSpider {
             mActivity.updateUI(result);
         }
     }
+    private class HomepageParser extends DOMParser<JSONArray>{
+        FragmentHome mFragment;
+        public HomepageParser(FragmentHome fragment){
+            mFragment = fragment;
+        }
+        @Override
+        JSONArray ParseDOM(Document doc) {
+            JSONArray data = new JSONArray();
+            JSONObject tdata;
+            if(doc == null)
+                return new JSONArray();
+            Log.d("DEBUG",doc.toString());
+            Log.d("DEBUG",sWebSpider.WebCookies.map.toString());
+            Log.d("DEBUG",sWebSpider.APICookies.map.toString());
+            // Parse 小组话题 and 热门讨论条目
+            for(Element c : doc.getElementsByClass("sideTpcList")){
+                for(Element e : c.getElementsByTag("li")){
+                    if(e.classNames().contains("tools"))
+                        continue;
+                    tdata = new JSONObject();
+                    String submitUserId     = "";
+                    Matcher matcher = Pattern.compile("[0-9]+\\.").matcher(e.child(0).child(0).attr("src"));
+                    if(matcher.find())
+                        submitUserId = matcher.group();
+                    String[] list = e.child(0).attr("href").split("/");
+                    Element t = e.child(1).getElementsByTag("p").first().getElementsByTag("a").first();
+                    tdata.put("id",list[3]);
+                    tdata.put("type",list[1]);
+                    tdata.put("title",e.child(1).child(0).ownText());
+                    tdata.put("reply_count",e.child(1).child(1).ownText());
+                    tdata.put(list[1].concat("_name"),t.ownText());
+                    tdata.put((list[1].concat("_id")),t.attr("href"));
+                    tdata.put("submit_user_id",submitUserId.substring(0,submitUserId.length()-1));
+                    tdata.put("submit_user_name",e.child(0).child(0).attr("title"));
+                    data.add(tdata);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        void UpdateUI(JSONArray result) {
+            mFragment.updateUI(result);
+        }
+    }
 
     // API控制
-    static abstract class APIParser{
-        abstract JSONObject    ParseAPI(JSONObject json);
-        abstract void       UpdateUI(JSONObject json);
-    }
 
     // 网络部分
     private static class AsyncTaskNetwork extends  AsyncTask<Void,Void,Document>{
@@ -503,7 +551,7 @@ public class WebSpider {
             Document doc;
             try {
                 if(mParent.WebCookies.map == null){
-                    mParent.WebCookies.map = Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute().cookies();
+                    sWebSpider.WebCookies.map.putAll(Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute().cookies());
                     if(mParent.WebCookies == null)
                         return null;
                 }
@@ -512,7 +560,7 @@ public class WebSpider {
                         .timeout(3000)
                         .parser(Parser.xmlParser());
                 doc = con.get();
-                mParent.WebCookies.map = con.response().cookies();
+                mParent.WebCookies.map.putAll(con.response().cookies());
             }catch (IOException e){
                 mParent.unlock();
                 return null;
@@ -525,26 +573,12 @@ public class WebSpider {
             mParser.UpdateUI(mParser.ParseDOM(doc));
         }
     }
-    private static class FetchResponse extends AsyncTask<WebSpider,Void,Void> {
-        @Override
-        protected Void doInBackground(WebSpider... params){
-            WebSpider parent = params[0];
-            Connection.Response res;
-            try {
-                res = Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute();
-            }catch (IOException e){
-                return null;
-            }
-            parent.WebCookies.map = res.cookies();
-            return null;
-        }
-    }
-    private static class AsyncLogin extends AsyncTask<Void, Void, JSONObject>{
+    private static class AsyncApiLogin extends AsyncTask<Void, Void, JSONObject>{
         OnLoginListener mListener;
         String mUsername;
         String mPassword;
         String mB64Key;
-        private AsyncLogin(String username, String password, String b64Key, OnLoginListener listener){
+        private AsyncApiLogin(String username, String password, String b64Key, OnLoginListener listener){
             mListener = listener;
             mUsername = username;
             mPassword = password;
@@ -552,19 +586,18 @@ public class WebSpider {
         }
         @Override
         protected JSONObject doInBackground(Void... params){
-            while(sWebSpider.mAuthStatus == -1){         // delay
+            while(sWebSpider.api_login_lock){         // delay
                 try {
                     Thread.sleep(1000);
                 }catch (InterruptedException e){
                     Log.d("DEBUG-KERNEL","INTERRUPTED");
                 }
             }
-            sWebSpider.mAuthStatus = -1; // lock
+            sWebSpider.api_login_lock = true; // lock
             JSONObject data;
             Connection con = Jsoup.connect("http://api.bgm.tv/auth?source=onAir").timeout(5000);
             con.header("Accept","application/json");
-            if(sWebSpider.WebCookies.map != null)
-                con.cookies(sWebSpider.WebCookies.map);
+            con.cookies(sWebSpider.APICookies.map);
             con.ignoreContentType(true);
             if(mB64Key == null) {
                 con.data("username", mUsername);
@@ -586,28 +619,154 @@ public class WebSpider {
                 Log.d("DEBUG-KERNEL",e.toString());
                 return null;
             }
-            sWebSpider.APICookies.map = con.response().cookies();
+            sWebSpider.APICookies.map.putAll(con.response().cookies());
             return data;
         }
         @Override
         protected void onPostExecute(JSONObject data){
+            sWebSpider.api_login_lock = false;
             if(data == null){
-                sWebSpider.mAuthStatus = 0;
                 mListener.onBusy();
                 return;
             }
-            int status;
+            boolean status = false;
             if(data.containsKey("error")){
-                status = 0;
+                status = false;
             }else{
-                status = 1;
+                status = true;
+                if(mB64Key == null || mB64Key.equals(""))
+                    sWebSpider.mAuthB64Key = sWebSpider.generateB64Key(mUsername,mPassword);
+                sWebSpider.mAuthInfo = data;
             }
-            sWebSpider.mAuthStatus = status;
-            sWebSpider.mAuthInfo = data;
+            sWebSpider.setApiAuthStatus(status);
+            if(status)  mListener.onSuccess(data);
+            else        mListener.onFailed(data);
+        }
+    }
+    private static class AsyncWebLogin extends AsyncTask<Void, Void, Boolean>{
+        OnLoginListener mListener;
+        String mEmail;
+        String mPassword;
+        String mCaptcha;
+        public AsyncWebLogin(String email, String password, String captcha, OnLoginListener listener){
+            mListener = listener;
+            mEmail = email;
+            mPassword = password;
+            mCaptcha = captcha;
+        }
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            while(sWebSpider.web_login_lock){         // delay
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException e){
+                    Log.d("DEBUG-KERNEL","INTERRUPTED");
+                }
+            }
+            sWebSpider.web_login_lock = true;
+            if(sWebSpider.mChiiAuth.equals("")) {
+                try {
+                    Connection con = Jsoup.connect("https://bgm.tv/FollowTheRabbit")
+                            .ignoreContentType(true)
+                            .cookies(sWebSpider.WebCookies.map)
+                            .data("formhash", "6e441a0b")
+                            .data("email", mEmail)
+                            .data("password", mPassword)
+                            .data("captcha_challenge_field", mCaptcha)
+                            .data("loginsubmit", "登陆")
+                            .method(Connection.Method.POST);
+                    Connection.Response res = con.execute();
+                    sWebSpider.WebCookies.map.putAll(res.cookies());
+                    if (!res.cookies().containsKey("chii_auth")) {
+                        return false;
+                    }
+                    Document doc = res.parse();
+                    return true;
+                } catch (IOException e) {
+                    Log.d("DEBUG-KERNEL", e.toString());
+                }
+            }else{
+                try {
+                    if(sWebSpider.WebCookies.map.containsKey("chii_sid"))
+                        sWebSpider.WebCookies.map.remove("chii_sid");
+                    sWebSpider.WebCookies.map.put("chii_auth",sWebSpider.mChiiAuth);
+                    Connection con = Jsoup.connect("https://bgm.tv/FollowTheRabbit")
+                            .ignoreContentType(true)
+                            .cookies(sWebSpider.WebCookies.map)
+                            .method(Connection.Method.GET);
+                    Connection.Response res = con.execute();
+                    if(res.url().getFile().equals("/"))
+                        return true;
+                    else
+                        return false;
+                }catch (IOException e){
+                    Log.d("DEBUG-KERNEL",e.toString());
+                }
+            }
+            return false;
+        }
+        @Override
+        protected void onPostExecute(Boolean status){
+            sWebSpider.web_login_lock  = false;
+            sWebSpider.setWebAuthStatus(status);
+            if(status){
+                mListener.onSuccess(null);
+            }else{
+                mListener.onFailed(null);
+            }
+        }
+    }
+    public static class AsyncCaptchaLoader extends AsyncTask<Void, Void, Bitmap> {
+        OnCaptchaReadyListener mListener;
+        public AsyncCaptchaLoader(OnCaptchaReadyListener listener){
+            mListener = listener;
+        }
+        @Override
+        protected Bitmap doInBackground(Void... voids) {
+            String timestamp = String.valueOf((new Date().getTime())/1000);
+            String rand      = String.valueOf((new Random().nextInt(6))+1);
+            String url       = "https://bgm.tv/signup/captcha?".concat(timestamp).concat(rand);
 
-            if(status == 0) mListener.onFailed(data);
-            if(status == 1) mListener.onSuccess(data);
-            if(status == -1) mListener.onBusy();
+            // Refresh cookies
+            if((!sWebSpider.WebCookies.map.containsKey("__cfduid")) || (!sWebSpider.WebCookies.map.containsKey("chii_sid"))) {  // 没有cookies
+                try {
+                    Connection.Response res = Jsoup.connect("https://bgm.tv/FollowTheRabbit").execute();
+                    sWebSpider.WebCookies.map.putAll(res.cookies());
+                    Thread.sleep(5000);
+                } catch (Exception e) {
+                    Log.d("DEBUG-KERNEL", e.toString());
+                }
+            }
+
+            // Fetch Captcha
+            Bitmap captcha;
+            try {
+                Log.d("DEBUG-KERNEL",url);
+                Connection con = Jsoup.connect(url);
+                con.cookies(sWebSpider.WebCookies.map);
+                con.header("Accept","image/webp,image/apng,image/*,*/*;q=0.8");
+                con.header("refer","https://bgm.tv/login");
+                con.cookies(sWebSpider.WebCookies.map);
+                con.ignoreContentType(true);
+                Connection.Response res = con.execute();
+                sWebSpider.WebCookies.map.putAll(res.cookies());
+                byte[] data = res.bodyAsBytes();
+                captcha = BitmapFactory.decodeByteArray(data,0,data.length);
+
+            }catch (IOException e){
+                Log.d("DEBUG-KERNEL",e.toString());
+                return null;
+            }
+            return captcha;
+        }
+        @Override
+        protected void onPostExecute(Bitmap img){
+            sWebSpider.captcha_lock = false;// unlock
+            if(img == null){
+                mListener.onFailed();
+            }else{
+                mListener.onSuccess(img);
+            }
         }
     }
 
@@ -623,11 +782,19 @@ public class WebSpider {
     private void    unlock(){
         this.syn_lock = 0;
     }
+    private boolean captcha_lock = false;
+    private boolean api_login_lock = false;
+    private boolean web_login_lock = false;
     /*
     * 定义全局变量
     */
     private static WebSpider sWebSpider;
+    private Context mContext;
     private WebSpider(Context context) {
+        this.mContext = context;
+    }
+    protected void finalize(){
+        this.SaveStatus(mContext);
     }
 
     /*
@@ -681,26 +848,16 @@ public class WebSpider {
     public void GetCharacterList(String Url, ActivityCharactersList activity){
         new AsyncTaskNetwork(this, new CharacterListParser(activity),Url).execute();
     }
+    public void GetHomepage(FragmentHome home){
+        new AsyncTaskNetwork(this, new HomepageParser(home),"http://bgm.tv/").execute();
+    }
+
 
     public static WebSpider get(Context context) {
         if(sWebSpider == null){
             sWebSpider = new WebSpider(context);
             // INIT
-            SharedPreferences sp = context.getSharedPreferences(WebSpider.NAME_WS_CONFIG,0);
-
-            String web_cookies  = sp.getString(WebSpider.CONFIG_KEY_WEB_COOKIES,"");
-            String api_cookies  = sp.getString(WebSpider.CONFIG_KEY_API_COOKIES,"");
-            String b64Key       = sp.getString(WebSpider.CONFIG_KEY_AUTH_BASIC,"");
-            String basicInfo    = sp.getString(WebSpider.CONFIG_KEY_BASIC_INFO,"");
-
-            if(!web_cookies.equals(""))
-                sWebSpider.WebCookies.map = JSON.parseObject(web_cookies,new TypeReference<Map<String, String>>(){});
-            if(!api_cookies.equals(""))
-                sWebSpider.APICookies.map = JSON.parseObject(api_cookies,new TypeReference<Map<String, String>>(){});
-            if(!b64Key.equals(""))
-                sWebSpider.mAuthB64Key = b64Key;
-            if(!basicInfo.equals(""))
-                sWebSpider.mAuthBasicInfo = JSON.parseObject(basicInfo);
+            sWebSpider.LoadStatus(context);
         }
         return sWebSpider;
     }
@@ -723,35 +880,121 @@ public class WebSpider {
 
     // PROTOCOL LAYER
 
-    protected int mAuthStatus = 0;          // 0 => false
-                                            // 1 => true
-                                            // -1 => in processing
+    private boolean mAuthStatus = false;
 
-    private String mAuthB64Key          = null;
     private JSONObject mAuthBasicInfo   = null;
+    private String mAuthB64Key          = "";
+    private String mChiiAuth            = "";
+    private boolean mWebAuthStatus       = false;
+    private boolean mApiAuthStatus       = false;
 
 
-    public static String NAME_WS_CONFIG = "name_ws_config";
-    public static String CONFIG_KEY_BASIC_INFO  = "config_key_basic_info";
-    public static String CONFIG_KEY_AUTH_TOKEN  = "config_key_auth_token";
-    public static String CONFIG_KEY_AUTH_BASIC  = "config_key_auth_basic";
-    public static String CONFIG_KEY_WEB_COOKIES = "config_key_web_cookies";
-    public static String CONFIG_KEY_API_COOKIES = "config_key_api_cookies";
+    private static String NAME_WS_CONFIG = "name_ws_config";
+    private static String CONFIG_KEY_BASIC_INFO  = "config_key_basic_info";      // from api get user basic info
+    private static String CONFIG_KEY_AUTH_BASIC  = "config_key_auth_basic";      // B64Key for api to login
+    private static String CONFIG_KEY_CHII_AUTH   = "config_key_chii_auth";       // Web cookies chii_auth when login
+    private static String CONFIG_KEY_WEB_COOKIES = "config_key_web_cookies";
+    private static String CONFIG_KEY_API_COOKIES = "config_key_api_cookies";
 
-    protected JSONObject mAuthInfo = new JSONObject();
+    private JSONObject mAuthInfo = new JSONObject();
 
-    public void Auth(String email, String password,String b64Key, OnLoginListener listener){
-        if(mAuthStatus != -1)
-            new AsyncLogin(email,password,b64Key,listener).execute();
+    private void setWebAuthStatus(boolean status){
+        mWebAuthStatus = status;
+        if(mWebAuthStatus && mApiAuthStatus)
+            mAuthStatus = true;
     }
-    public void CheckAuthStatus(OnLoginListener listener){
-        if(mAuthStatus != -1 && mAuthB64Key != null)
-            new AsyncLogin(null,null,mAuthB64Key,listener).execute();
+    private void setApiAuthStatus(boolean status){
+        mApiAuthStatus = status;
+        if(mWebAuthStatus && mApiAuthStatus)
+            mAuthStatus = true;
+    }
+    private String generateB64Key(String email, String password){
+        String b64key = "";
+        try{
+            b64key = "Basic ".concat(new String(Base64.encode((email.concat(":").concat(password)).getBytes("utf-8"), Base64.NO_WRAP), "utf-8"));
+        } catch (UnsupportedEncodingException e) {
+            Log.d("DEBUG", e.toString());
+        }
+        return b64key;
     }
 
-    public int AuthStatus(){
+    public void APIAuth(String email, String password, String b64Key, OnLoginListener listener){
+        if(api_login_lock)
+            listener.onBusy();
+        else
+            new AsyncApiLogin(email,password,b64Key,listener).execute();
+    }
+    public void WebAuth(String email, String password, String captcha, OnLoginListener listener){
+        if(web_login_lock)
+            listener.onBusy();
+        else
+            new AsyncWebLogin(email,password,captcha,listener).execute();
+    }
+    public void WebAuthFetchCaptcha(OnCaptchaReadyListener listener){
+        if(captcha_lock)
+            listener.onBusy();
+        captcha_lock = true;
+        new AsyncCaptchaLoader(listener).execute();
+    }
+    public void CheckAPIAuthStatus(OnLoginListener listener){
+        if(api_login_lock)
+            listener.onFailed(JSONObject.parseObject("{\"error\":\"繁忙，请稍后再试\"}"));
+        else if(mAuthB64Key.equals(""))
+            listener.onFailed(JSONObject.parseObject("{\"error\":\"没有有效的B64Key\"}"));
+        else
+            new AsyncApiLogin(null, null, mAuthB64Key, listener).execute();
+    }
+    public void CheckWebAuthStatus(OnLoginListener listener){
+        if(web_login_lock)
+            listener.onFailed(JSONObject.parseObject("{\"error\":\"繁忙，请稍后再试\"}"));
+        else if(mChiiAuth.equals(""))
+            listener.onFailed(JSONObject.parseObject("{\"error\":\"没有有效的chii_auth\"}"));
+        else
+            new AsyncWebLogin(null,null,null,listener).execute();
+    }
+    public boolean getAuthStatus(){
         return mAuthStatus;
     }
+    public JSONObject getAuthInfo(){
+        return mAuthInfo;
+    }
+    public void SaveStatus(Context context){
+        SharedPreferences sp = context.getSharedPreferences(WebSpider.NAME_WS_CONFIG, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        if(mAuthBasicInfo != null)
+            editor.putString(WebSpider.CONFIG_KEY_BASIC_INFO, mAuthBasicInfo.toString());
+        if(!mAuthB64Key.equals(""))
+            editor.putString(WebSpider.CONFIG_KEY_AUTH_BASIC, mAuthB64Key);
+        if(WebCookies.map.containsKey("chii_auth")) {
+            editor.putString(WebSpider.CONFIG_KEY_CHII_AUTH, WebCookies.map.get("chii_auth"));
+            WebCookies.map.remove("chii_auth");
+        }
+        editor.putString(WebSpider.CONFIG_KEY_WEB_COOKIES,JSON.toJSONString(WebCookies.map));
+        editor.putString(WebSpider.CONFIG_KEY_API_COOKIES,JSON.toJSONString(APICookies.map));
+        editor.apply();
+    }
+    public void LoadStatus(Context context){
+        SharedPreferences sp = context.getSharedPreferences(WebSpider.NAME_WS_CONFIG,0);
 
+        String basicInfo    = sp.getString(WebSpider.CONFIG_KEY_BASIC_INFO,"");
+        String b64Key       = sp.getString(WebSpider.CONFIG_KEY_AUTH_BASIC,"");
+        String web_cookies  = sp.getString(WebSpider.CONFIG_KEY_WEB_COOKIES,"");
+        String api_cookies  = sp.getString(WebSpider.CONFIG_KEY_API_COOKIES,"");
+        mChiiAuth           = sp.getString(WebSpider.CONFIG_KEY_CHII_AUTH,"");
+
+        if(!web_cookies.equals(""))
+            sWebSpider.WebCookies.map = JSON.parseObject(web_cookies,new TypeReference<Map<String, String>>(){});
+        if(!api_cookies.equals(""))
+            sWebSpider.APICookies.map = JSON.parseObject(api_cookies,new TypeReference<Map<String, String>>(){});
+        if(!b64Key.equals(""))
+            sWebSpider.mAuthB64Key = b64Key;
+        if(!basicInfo.equals(""))
+            sWebSpider.mAuthBasicInfo = JSON.parseObject(basicInfo);
+    }
+    public void ClearSavedStatus(Context context){
+        SharedPreferences sp = context.getSharedPreferences(WebSpider.NAME_WS_CONFIG, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.clear();
+        editor.apply();
+    }
 }
-
