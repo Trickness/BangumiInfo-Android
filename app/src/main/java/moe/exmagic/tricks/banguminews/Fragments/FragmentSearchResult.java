@@ -1,8 +1,10 @@
 package moe.exmagic.tricks.banguminews.Fragments;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.support.annotation.RequiresApi;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -169,10 +171,11 @@ public class FragmentSearchResult extends Fragment {
         }
         @Override
         public void onClick(View v) {
-            Intent intent = new Intent(getContext(), ActivityItemDetail.class);
+            Intent intent = new Intent(getActivity(), ActivityItemDetail.class);
             Bundle bundle = new Bundle();
             bundle.putSerializable(ActivityItemDetail.EXTRA_ITEM_DETAIL_BASEITEM,pBaseItem);
-            bundle.putSerializable(ActivityItemDetail.EXTRA_WEBSPIDER_COOKIES,WebSpider.get(getContext()).WebCookies);
+            // TODO: Fix this cookies reference
+//            bundle.putSerializable(ActivityItemDetail.EXTRA_WEBSPIDER_COOKIES,WebSpider.get(getContext()).WebCookies);
             intent.putExtra(ActivityItemDetail.EXTRA_ITEM_DETAIL,bundle);
             startActivity(intent);
         }
@@ -201,6 +204,7 @@ public class FragmentSearchResult extends Fragment {
             return mResults.result.size();
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
         public void onBindViewHolder(ItemsHolder holder, int position) {
             SearchResultItem item = mResults.result.get(position);
