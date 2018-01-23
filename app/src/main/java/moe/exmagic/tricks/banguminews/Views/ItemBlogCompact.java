@@ -15,7 +15,7 @@ import moe.exmagic.tricks.banguminews.Utils.BgmDataType.*;
 /**
  * Created by tricks on 17-2-9.
  */
-// TODO: handle onclick
+
 public class ItemBlogCompact extends Fragment {
     private BlogItem mBlog;
     public void setBlog(BlogItem item){

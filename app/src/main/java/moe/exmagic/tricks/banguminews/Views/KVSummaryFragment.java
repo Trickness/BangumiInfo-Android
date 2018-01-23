@@ -19,8 +19,6 @@ import moe.exmagic.tricks.banguminews.R;
  * Created by tricks on 17-2-9.
  */
 
-// TODO: KVDetail More Info
-
 public class KVSummaryFragment extends Fragment {
     private Map<String,ArrayList<String>> mKVSummary;
     public void setSummary(Map<String,ArrayList<String>> s){

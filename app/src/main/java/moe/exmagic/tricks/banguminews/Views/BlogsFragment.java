@@ -17,8 +17,6 @@ import moe.exmagic.tricks.banguminews.Utils.BgmDataType.*;
  * Created by tricks on 17-2-9.
  */
 
-// TODO: Fragment Blogs List
-
 public class BlogsFragment extends Fragment {
     private int mSubjectId;
     private ArrayList<BlogItem> mBlogs;

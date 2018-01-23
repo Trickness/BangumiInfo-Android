@@ -23,6 +23,7 @@
         <activity android:name=".ActivityCharactersList"/>
         <activity android:name=".ActivityCharacterView"/>
         <activity android:name=".ActivityPersonalInfo"/>
+        <activity android:name=".ActivityLogin"/>
 
     </application>
     <uses-permission android:name="android.permission.INTERNET" />

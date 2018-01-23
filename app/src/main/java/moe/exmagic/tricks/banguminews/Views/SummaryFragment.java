@@ -13,8 +13,6 @@ import moe.exmagic.tricks.banguminews.R;
  * Created by tricks on 17-2-9.
  */
 
-//TODO : MORE SUMMARY
-
 public class SummaryFragment extends Fragment {
     private String mSummary;
     public void setSummary(String s){
