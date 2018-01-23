@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:topLeftRadius="32dip" android:topRightRadius="32dip"
+        android:bottomLeftRadius="32dip" android:bottomRightRadius="32dip" />
+    <stroke android:color="@color/colorBangumiMain" android:width="1dip"/>
+</shape>
