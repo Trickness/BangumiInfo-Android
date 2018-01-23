@@ -2,6 +2,7 @@ package moe.exmagic.tricks.banguminews.Utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -38,7 +39,7 @@ public class BgmDataType {
         public ArrayList<BlogItem>      Blogs;
         public ArrayList<CharacterItem> CharactersList;
         public ArrayList<CommentItem>   Comments;
-        public ArrayList<TopicItem>     Topics;
+        public ArrayList<SubjectTopicItem>     Topics;
         public Map<String,ArrayList<String>> KVInfo;     // key-value infomation
         public ArrayList<Integer>       ScoreDetail;
     }
@@ -82,7 +83,7 @@ public class BgmDataType {
         public String   EpID;
         public boolean  isAvailable;
     }
-    public static class TopicItem {
+    public static class SubjectTopicItem {
         public String       Title;
         public UserItem     Submitter;
         public int          RepliesNumber;
@@ -95,5 +96,17 @@ public class BgmDataType {
         public String searchType = "0";
         public String keyWord = "";
         public ArrayList<BgmDataType.SearchResultItem> result = new ArrayList<>();
+    }
+    public static class GroupTopicCompactItem{
+        public String       Title;
+        public UserItem     Submitter;
+        public int          RepliesNumber;
+        public String       TopicID;
+        public String       GroupName;
+        public String       GroupID;
+    }
+    public static class GroupTopicItem{
+        public GroupTopicCompactItem basicItem;
+        public Date         LastReply;
     }
 }
