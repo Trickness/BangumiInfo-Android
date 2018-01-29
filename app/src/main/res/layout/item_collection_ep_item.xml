@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <LinearLayout
+        android:background="@drawable/collection_eps_outer_border"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_marginTop="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="8dp"
+        android:paddingStart="8dp"
+        android:paddingBottom="8dp"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:layout_weight="7.5"
+                android:orientation="vertical"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/ep_title_view"
+                    android:layout_marginStart="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="ep.1 Shanking your heart"/>
+                <LinearLayout
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical"
+                    android:layout_marginStart="42dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:id="@+id/ep_cn_title_view"
+                        android:textSize="10sp"
+                        android:text="中文标题：震撼你的心"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/ep_on_air_date"
+                        android:textSize="10sp"
+                        android:text="首播：2017-11-03"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/ep_duration"
+                        android:textSize="10sp"
+                        android:text="时长 00:24:00"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:id="@+id/ep_comment_num"
+                        android:textSize="10sp"
+                        android:text="讨论  (+3)"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </LinearLayout>
+            <CheckBox
+                android:id="@+id/ep_set_watched_checkbox"
+                android:textColor="@color/colorBangumiMain"
+                android:text="看到"
+                android:layout_weight="2.5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+    </LinearLayout>

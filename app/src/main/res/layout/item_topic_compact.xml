@@ -1,37 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/topic_compact_header_size"
-    android:orientation="horizontal">
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="8dp"
+    android:orientation="vertical">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/topic_compact_header_view"
+            android:layout_width="@dimen/topic_compact_header_size"
+            android:layout_height="@dimen/topic_compact_header_size" />
+        <LinearLayout
+            android:layout_marginStart="16dp"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/topic_compact_title_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:textSize="@dimen/topic_compact_title_size" />
+            <LinearLayout
+                android:id="@+id/topic_other_container"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/topic_department_name_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:textSize="10sp"
+                    android:textColor="#AAAAAA" />
+                <TextView
+                    android:id="@+id/topic_reply_count_view"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/replies_border"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="5dp"
+                    android:layout_marginStart="16dp"
+                    android:textSize="10sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+    <ImageView
+        android:layout_marginTop="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="#EEEEEE"/>
 
-    <com.makeramen.roundedimageview.RoundedImageView
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:id="@+id/topic_compact_header_view"
-        android:layout_width="@dimen/topic_compact_header_size"
-        android:layout_height="@dimen/topic_compact_header_size"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
 
-    <TextView
-        android:id="@+id/topic_compact_title_view"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Title"
-        android:maxLines="2"
-        android:textSize="@dimen/topic_compact_title_size"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/topic_compact_header_view" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_editor_absoluteY="45dp"
-        android:text="HELLO"
-        android:layout_marginLeft="8dp"
-        app:layout_constraintLeft_toRightOf="@id/topic_compact_header_view" />
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>

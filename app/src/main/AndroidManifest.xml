@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="moe.exmagic.tricks.banguminews">
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -24,6 +24,7 @@
         <activity android:name=".ActivityCharacterView"/>
         <activity android:name=".ActivityPersonalInfo"/>
         <activity android:name=".ActivityLogin"/>
+        <activity android:name=".ActivityTopicView"/>
 
     </application>
     <uses-permission android:name="android.permission.INTERNET" />

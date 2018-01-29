@@ -10,7 +10,7 @@ import android.widget.Toolbar;
 import java.util.ArrayList;
 
 import moe.exmagic.tricks.banguminews.Utils.BgmDataType.*;
-import moe.exmagic.tricks.banguminews.Views.ItemCharacterCompact;
+import moe.exmagic.tricks.banguminews.Fragments.SubjectDetail.ItemCharacterCompact;
 import moe.exmagic.tricks.banguminews.WebSpider.WebSpider;
 
 /**

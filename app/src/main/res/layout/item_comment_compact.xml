@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:background="@android:color/white"
@@ -12,27 +16,31 @@
         android:orientation="horizontal">
         <ImageView
             android:id="@+id/comment_user_header"
-            android:layout_height="32dp"
-            android:layout_width="32dp"
-            android:layout_marginTop="3dp"
-            android:layout_marginLeft="@dimen/activity_horizontal_margin"
-            android:layout_marginStart="3dp" />
+            android:layout_height="42dp"
+            android:layout_width="42dp" />
 
         <LinearLayout
+            android:layout_marginTop="4dp"
+            android:background="@drawable/comment_compact_border"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:paddingTop="6dp"
             android:layout_marginBottom="8dp"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginStart="8dp"
+            android:paddingStart="8dp"
             android:orientation="vertical"
             android:weightSum="1">
 
-            <RelativeLayout
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <TextView
+                    android:layout_weight="1"
                     android:id="@+id/comment_nickname"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="16sp"
@@ -40,31 +48,44 @@
                     android:textStyle="bold"
                     tools:text="这是用户名" />
                 <TextView
-                    android:id="@+id/comment_star_info"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_toRightOf="@id/comment_nickname"
-                    android:layout_toEndOf="@id/comment_nickname"
-                    android:layout_marginLeft="3dp"
-                    android:layout_marginStart="3dp"
+                    android:id="@+id/comment_submit_date"
+                    android:layout_marginEnd="16dp"
                     android:textSize="9sp"
-                    android:layout_marginTop="10dp"
-                    android:text=" @Stars 9"/>
-
-            </RelativeLayout>
-
+                    tools:text="1d2h" />
+            </LinearLayout>
+            <com.idlestar.ratingstar.RatingStarView
+                android:id="@+id/comment_stars_view"
+                android:layout_marginStart="8dp"
+                app:cornerRadius="2dp"
+                app:strokeWidth="1px"
+                app:strokeColor="#457DD7"
+                app:starForegroundColor="#DB6958"
+                app:starBackgroundColor="#E8E8E8"
+                app:rating="3.5"
+                app:onlyHalfStar="false"
+                app:starNum="5"
+                android:layout_width="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_height="10dp" />
             <TextView
-                android:layout_width="match_parent"
+                android:visibility="invisible"
+                android:id="@+id/comment_star_info"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/comment_submit_date"
+                android:layout_toRightOf="@id/comment_nickname"
+                android:layout_toEndOf="@id/comment_nickname"
+                android:layout_marginLeft="3dp"
+                android:layout_marginStart="3dp"
                 android:textSize="9sp"
-                tools:text="2017年1月8日00:25:00" />
-
+                android:text=" @Stars 9"/>
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="@dimen/activity_horizontal_margin"
-                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:layout_marginStart="4dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginEnd="12dp"
                 android:id="@+id/comment_text"
                 android:textSize="13sp"
                 tools:text="Values"/>

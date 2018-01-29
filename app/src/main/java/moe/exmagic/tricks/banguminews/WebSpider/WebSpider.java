@@ -14,6 +14,7 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
@@ -35,9 +36,11 @@ import moe.exmagic.tricks.banguminews.ActivityCommentList;
 import moe.exmagic.tricks.banguminews.ActivityItemDetail;
 import moe.exmagic.tricks.banguminews.ActivityBlogView;
 import moe.exmagic.tricks.banguminews.ActivityBlogList;
-import moe.exmagic.tricks.banguminews.Fragments.FragmentHome;
+import moe.exmagic.tricks.banguminews.Fragments.HomePage.FragmentHome;
 import moe.exmagic.tricks.banguminews.Fragments.FragmentSearchResult;
+import moe.exmagic.tricks.banguminews.Fragments.HomePage.FragmentTimeLine;
 import moe.exmagic.tricks.banguminews.Utils.BgmDataType.*;
+import moe.exmagic.tricks.banguminews.Fragments.HomePage.FragmentHome;
 
 
 // 第三方库
@@ -56,17 +59,19 @@ public class WebSpider {
     public static String SEARCH_MUSIC      = "3";
     public static String SEARCH_3DIM       = "6";
     public static String SEARCH_PERSON     = "person";
-    public static String BASE_SITE         = "https://bgm.tv/";
-    public static String BAST_API_SITE     = "https://api.bgm.tv/";
+    public static String BASE_SITE         = "//bgm.tv";
+    public static String BAST_API_SITE     = "//api.bgm.tv";
     public static String LOGIN_URL         = "FollowTheRabbit";
     public static String USER_AGENT        = "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0\\r\\n";
-    public static String PROTOCOL          = "https:";
+    public static String PROTOCOL          = "http:";
 
     public static int ITEM_TYPE_BANGUMI     = 1;
     public static int ITEM_TYPE_BOOK        = 2;
     public static int ITEM_TYPE_MUSIC       = 3;
     public static int ITEM_TYPE_GAME        = 4;
     public static int ITEM_TYPE_3DIM        = 6;
+
+    public static Pattern USER_ID_PATTERN = Pattern.compile("[0-9]+\\.");   // via header url
 
     private SerializableMap  WebCookies = new SerializableMap();
     private SerializableMap  APICookies  = new SerializableMap();
@@ -80,18 +85,21 @@ public class WebSpider {
     }
     //  页面分析器
     static abstract class ElementParser{
-        static ArrayList<String>        ParseTags(Element E) {
-            ArrayList<String> result = new ArrayList<>();
+        static ArrayList<TagItem>        ParseTags(Element E) {
+            ArrayList<TagItem> result = new ArrayList<>();
             if(E != null){
                 E = E.getElementsByClass("inner").first();
                 for(Element e : E.getElementsByTag("a")){
-                    result.add(e.text());
+                    TagItem item = new TagItem();
+                    item.Tag = e.child(0).ownText();
+                    item.Num = e.child(1).ownText();
+                    result.add(item);
                 }
             }
             return result;
         }
-        static TreeMap<String,EpItem>   ParseEps(Element E){
-            TreeMap<String,EpItem> result = new TreeMap();
+        static TreeMap<Integer,EpItem>   ParseEps(Element E){
+            TreeMap<Integer,EpItem> result = new TreeMap();
             if(E == null){
                 return result;
             }
@@ -110,9 +118,9 @@ public class WebSpider {
                 episode.EpID = e.attr("href").substring(4);
                 episode.Episode = epType + e.text();
                 episode.Title = e.attr("title");
-                episode.isAvailable = e.attr("class").endsWith("r");
+                //episode.isAvailable = e.attr("class").endsWith("r");
 
-                result.put(episode.Episode,episode);
+                result.put(Integer.parseInt(episode.Episode),episode);
             }
 
             return result;
@@ -141,12 +149,12 @@ public class WebSpider {
 
                 e = e.getElementsByClass("tip_j").first();
 
-                character.CharacterType = e.child(0).child(0).text();
+                character.CharacterRoleName = e.child(0).child(0).text();
                 if(e.getElementsByTag("a").size() == 1){
                     character.CVInfo = new ArrayList<>();
                     PersonItem person = new PersonItem();
                     person.Name = e.getElementsByTag("a").first().text();
-                    person.PersonID = Integer.parseInt(e.getElementsByTag("a").first().attr("href").substring(8));
+                    person.PersonID = e.getElementsByTag("a").first().attr("href").substring(8);
                     character.CVInfo.add(person);
                 }
                 result.add(character);
@@ -204,6 +212,99 @@ public class WebSpider {
             }
             return result;
         }
+        static ArrayList<TopicReplyItem> ParseTopicSubReplyList(Element E){
+            if(E == null)
+                return null;
+            ArrayList<TopicReplyItem> replies = new ArrayList<>();
+
+            for(Element e : E.children()){
+                TopicReplyItem item = new TopicReplyItem();
+                // 基本信息
+                Element replyInfo = e.child(0).child(0);
+                item.ReplyPostId = replyInfo.child(0).attr("href");
+                item.ReplyIndex = replyInfo.child(0).ownText();
+                item.ReplyDate = replyInfo.ownText().replace("- ","");
+
+                // 用户信息
+                item.Submitter = new UserItem();
+                item.Submitter.UserHeaderUrl = PROTOCOL + e.child(1).child(0).attr("style").split("'")[1].replace("/s/","/l/");
+                Matcher matcher = USER_ID_PATTERN.matcher(item.Submitter.UserHeaderUrl);
+                if(matcher.find())
+                    item.Submitter.UserID = matcher.group().replace(".","");
+                Element inner = e.child(2);
+                item.Submitter.UserNickname = inner.child(0).child(0).ownText();
+                item.ReplyContent = inner.child(inner.children().size()-1).html().replace("src=\"/","width=\"21\" height=\"21\" src=\"" + PROTOCOL + BASE_SITE + "/");
+
+                replies.add(item);
+            }
+
+            return replies;
+        }
+        static ArrayList<TopicReplyItem>  ParseTopicReplyList(Element E) {
+            ArrayList<TopicReplyItem> result = new ArrayList<>();
+            for (Element e : E.children()) {
+                TopicReplyItem item = new TopicReplyItem();
+                // 时间，PostID和回复的索引
+                Element replyInfo = e.child(0).child(0);
+                item. ReplyDate = replyInfo.ownText();
+                item.ReplyPostId = replyInfo.child(0).attr("href");
+                item.ReplyIndex = replyInfo.child(0).ownText();
+
+                // 用户
+                if(item.ReplyIndex.equals("#356")){
+                    String t = item.ReplyIndex;
+                    continue;
+                }
+                item.Submitter = new UserItem();
+                item.Submitter.UserHeaderUrl = PROTOCOL + e.child(1).child(0).attr("style").split("'")[1].replace("/m/","/l/");
+                Matcher matcher = USER_ID_PATTERN.matcher(item.Submitter.UserHeaderUrl);
+                if(matcher.find())
+                    item.Submitter.UserID = matcher.group().replace(".","");
+                Element inner = e.child(2);
+                item.Submitter.UserNickname = inner.child(0).child(0).child(0).ownText();
+                if(inner.child(0).children().size()==2)
+                    item.SubmitterSignature = inner.child(0).child(1).ownText();
+
+                // 回复部分
+                item.ReplyContent = inner.child(1).child(0).html().replace("src=\"/","width=\"21\" height=\"21\" src=\"" + PROTOCOL + BASE_SITE + "/");
+
+                if(inner.child(1).children().size() != 1){
+                    item.SubReplies = ParseTopicSubReplyList(inner.child(1).child(1));
+                }
+                result.add(item);
+            }
+            return result;
+        }
+        static TopicItem    ParseTopicItem(Document doc){
+            TopicItem item = new TopicItem();
+            if(doc.getElementById("pageHeader")!=null){
+                item.TopicTitle = doc.getElementById("pageHeader").child(0).ownText();
+            }else{
+                item.TopicTitle = doc.getElementById("header").ownText();
+            }
+
+
+            Element e = doc.getElementsByClass("postTopic").first();
+            item.SubmitDate = e.child(0).child(0).ownText().split(" - ")[1];
+            item.Submitter = new UserItem();
+            item.Submitter.UserHeaderUrl = PROTOCOL + e.child(1).child(0).attr("style").split("'")[1].replace("/m/","/l/");
+            Matcher matcher = USER_ID_PATTERN.matcher(item.Submitter.UserHeaderUrl);
+            if(matcher.find())
+                item.Submitter.UserID = matcher.group().replace(".","");
+            Element inner = e.child(2);
+            item.Submitter.UserNickname = inner.child(0).child(0).ownText();
+            if(inner.child(1).className().equals("tip_j")){     // 有签名
+                item.SubmitterSignature = inner.child(1).ownText();
+                item.TopicContent = inner.child(2).html().replace("src=\"/","width=\"21\" height=\"21\" src=\"" + PROTOCOL + BASE_SITE + "/");
+            }else{
+                item.TopicContent = inner.child(1).html().replace("src=\"/","width=\"21\" height=\"21\" src=\"" + PROTOCOL + BASE_SITE + "/");
+            }
+
+
+            item.Replies = ParseTopicReplyList(doc.getElementById("comment_list"));
+
+            return item;
+        }
     }
     private class SearchResultParser extends DOMParser<SearchResult>{
         private int currentPage;
@@ -239,7 +340,7 @@ public class WebSpider {
                 }else {
                     resultItem.CoverUrl = "";
                 }
-                resultItem.DetailUrl = WebSpider.BASE_SITE + "subject/" + resultItem.ItemId;
+                resultItem.DetailUrl = WebSpider.PROTOCOL.concat(BASE_SITE + "/subject/" + resultItem.ItemId);
 
                 Item = Item.getElementsByClass("inner").first();
 
@@ -327,7 +428,7 @@ public class WebSpider {
                     blog.Submitter.UserID = e.getElementsByClass("tip_j").first().child(0).attr("href").substring(6);
                     blog.Submitter.isHeaderLoading = false;
                     blog.SubmitDatetime = e.getElementsByClass("time").get(1).ownText();
-                    blog.BlogCommentNumber = e.getElementsByClass("orange").first().text();
+                    blog.BlogReplyNumber = e.getElementsByClass("orange").first().text();
                     blog.BlogPreview = e.getElementsByClass("content").first().ownText();
                     result.Blogs.add(blog);
                 }
@@ -410,7 +511,7 @@ public class WebSpider {
                 item.BlogID = title.attr("href").substring(6);
                 item.Submitter.UserNickname = e.child(1).getElementsByTag("a").first().text();
                 item.SubmitDatetime = e.child(1).getElementsByClass("time").first().text();
-                item.BlogCommentNumber = e.child(1).getElementsByClass("orange").first().text();
+                item.BlogReplyNumber = e.child(1).getElementsByClass("orange").first().text();
                 item.BlogPreview = e.child(2).ownText().replace("<br />","").replace("&nbsp;","");
                 result.add(item);
             }
@@ -437,6 +538,27 @@ public class WebSpider {
         @Override
         void UpdateUI(ArrayList<CommentItem> result) {
             mActivity.updateUI(result);
+        }
+    }
+    private class CommentListParserNew extends  DOMParser<Object>{
+        OnWebspiderReturnListener mListener;
+        CommentListParserNew(OnWebspiderReturnListener listener){
+            mListener = listener;
+        }
+        @Override
+        Object ParseDOM(Document doc) {
+            if(doc == null){
+                return null;
+            }
+            return ElementParser.ParseCommentWithVote(doc.getElementById("comment_box"));
+        }
+        @Override
+        void UpdateUI(Object result) {
+            if(result != null){
+                mListener.onSuccess(result);
+            }else{
+                mListener.onFailed(null);
+            }
         }
     }
     private class CharacterListParser extends DOMParser<ArrayList<CharacterItem>>{
@@ -468,12 +590,12 @@ public class WebSpider {
                     character.CharacterTranslation = e.getElementsByTag("h2").first().child(1).text();  //
                 else
                     character.CharacterTranslation = "";
-                character.CharacterType = e.getElementsByClass("badge_job").first().ownText();
+                character.CharacterRoleName = e.getElementsByClass("badge_job").first().ownText();
                 character.CharacterGender = e.getElementsByClass("clearit").first().child(1).ownText().replace(" ","");
                 character.CVInfo = new ArrayList<>();
                 for (Element p : doc.getElementsByClass("actorBadge")){
                     PersonItem cv = new PersonItem();
-                    cv.PersonID = Integer.parseInt(p.child(0).attr("href").substring(8));
+                    cv.PersonID = p.child(0).attr("href").substring(8);
                     cv.HeaderUrl = WebSpider.PROTOCOL + p.child(0).child(0).attr("src");
                     cv.Name = p.child(1).child(0).ownText();
                     cv.Translation = p.child(1).child(1).ownText();
@@ -488,51 +610,201 @@ public class WebSpider {
             mActivity.updateUI(result);
         }
     }
-    private class HomepageParser extends DOMParser<JSONArray>{
+    private class HomepageParser extends DOMParser<ArrayList<TopicCompactItem>>{
         FragmentHome mFragment;
         public HomepageParser(FragmentHome fragment){
             mFragment = fragment;
         }
         @Override
-        JSONArray ParseDOM(Document doc) {
-            JSONArray data = new JSONArray();
-            JSONObject tdata;
+        ArrayList<TopicCompactItem> ParseDOM(Document doc) {
             if(doc == null)
-                return new JSONArray();
+                return null;
             Log.d("DEBUG",doc.toString());
             Log.d("DEBUG",sWebSpider.WebCookies.map.toString());
             Log.d("DEBUG",sWebSpider.APICookies.map.toString());
             // Parse 小组话题 and 热门讨论条目
+            ArrayList<TopicCompactItem> Topics = new ArrayList<>();
             for(Element c : doc.getElementsByClass("sideTpcList")){
                 for(Element e : c.getElementsByTag("li")){
                     if(e.classNames().contains("tools"))
                         continue;
-                    tdata = new JSONObject();
+                    TopicCompactItem item = new TopicCompactItem();
                     String submitUserId     = "";
-                    Matcher matcher = Pattern.compile("[0-9]+\\.").matcher(e.child(0).child(0).attr("src"));
+                    String tStr = e.child(0).child(0).attr("src");
+                    String[] ttstr = tStr.split("/s/");
+                    //tdata.put("header_url",WebSpider.PROTOCOL.concat(ttstr[0].concat("/l/").concat(ttstr[2])));
+                    item.Submitter = new UserItem();
+                    item.Submitter.UserHeaderUrl = WebSpider.PROTOCOL.concat(ttstr[0]).concat("/l/").concat(ttstr[1]);
+                    Matcher matcher = USER_ID_PATTERN.matcher(tStr);
                     if(matcher.find())
                         submitUserId = matcher.group();
                     String[] list = e.child(0).attr("href").split("/");
                     Element t = e.child(1).getElementsByTag("p").first().getElementsByTag("a").first();
-                    tdata.put("id",list[3]);
-                    tdata.put("type",list[1]);
-                    tdata.put("title",e.child(1).child(0).ownText());
-                    tdata.put("reply_count",e.child(1).child(1).ownText());
-                    tdata.put(list[1].concat("_name"),t.ownText());
-                    tdata.put((list[1].concat("_id")),t.attr("href"));
-                    tdata.put("submit_user_id",submitUserId.substring(0,submitUserId.length()-1));
-                    tdata.put("submit_user_name",e.child(0).child(0).attr("title"));
-                    data.add(tdata);
+                    item.TopicID = list[3];
+                    item.DepartmentType = list[1];
+                    item.Title = e.child(1).child(0).ownText();
+                    item.RepliesNumber = e.child(1).child(1).ownText();
+                    item.DepartmentName = t.ownText();
+                    item.DepartmentId = t.attr("href").split("/")[2];
+                    if(submitUserId.equals(""))
+                        item.Submitter.UserID = "";
+                    else
+                        item.Submitter.UserID = submitUserId.substring(0,submitUserId.length()-1);
+                    item.Submitter.UserNickname = e.child(0).child(0).attr("title");
+                    Topics.add(item);
                 }
             }
-            return null;
+            return Topics;
         }
 
         @Override
-        void UpdateUI(JSONArray result) {
+        void UpdateUI(ArrayList<TopicCompactItem> result) {
+            mFragment.updateTopics(result);
+        }
+    }
+    private class TimeLineParser extends DOMParser<ArrayList<TimeLineCommon>>{
+        FragmentTimeLine mFragment;
+        public TimeLineParser(FragmentTimeLine fragment){
+            mFragment = fragment;
+        }
+        @Override
+        ArrayList<TimeLineCommon> ParseDOM(Document doc) {
+            ArrayList<TimeLineCommon> result = new ArrayList<>();
+            UserItem    submitter = null;
+            TimeLineCommon common;
+            String      targetHeaderUrl = "";
+            if(doc  == null){
+                return null;
+            }
+            for(Element e : doc.getElementsByTag("li")){
+                common = new TimeLineCommon();
+
+                Element avatar = e.child(0);
+                Element info;
+                if(avatar.attr("class").equals("avatar")){
+                    // 说明和上一个的用户不同
+                    submitter = new UserItem();
+
+                    common.TimeLineId = e.id().split("_")[1];
+                    submitter.UserHeaderUrl = PROTOCOL + (avatar.child(0).child(0).attr("style").split("'")[1].replace("/m/","/l/"));
+                    Matcher matcher = USER_ID_PATTERN.matcher(submitter.UserHeaderUrl);
+                    if(matcher.find())
+                        submitter.UserID = matcher.group();
+
+                    info = e.child(1);
+                }else{
+                    info = e.child(0);
+                }
+                // parse info
+                // user nickname
+                int baseIndex = 0;
+                if(info.child(0).children().size() == 0){ // 没图片的
+                    baseIndex = 0;
+                    targetHeaderUrl = "";
+                }else{      // 有图片的
+                    baseIndex = 1;
+                    targetHeaderUrl = PROTOCOL + info.child(0).child(0).attr("src").replace("/g/","/l/");
+                }
+                submitter.UserNickname = info.child(baseIndex).ownText();
+                String strType = info.child(1).nodeName();
+                if(strType.equals("a")){
+                    // common item
+                    if(info.childNode(baseIndex + 1).getClass().toString().equals("class org.jsoup.nodes.TextNode")){
+                        // 通常内容
+                        String strAction = ((TextNode)info.childNode(baseIndex + 1)).text();
+                        ArrayList<TimeLineTargetItem> targetItems = new ArrayList<>();
+                        for(Element te : info.children().subList(baseIndex+1,info.children().size())){
+                            if(te.nodeName().equals("a")){
+                                TimeLineTargetItem targetItem = new TimeLineTargetItem();
+                                targetItem.Title = te.ownText();
+                                String[] splites = te.attr("href").split("/");
+                                targetItem.DepartmentType = splites[splites.length-2];
+                                targetItem.DepartmentId = splites[splites.length-1];
+                                targetItems.add(targetItem);
+                            }
+                        }
+                        String strObject = ((TextNode)info.childNode(baseIndex + targetItems.size()*2 + 1)).text();
+                        for(Element te : info.children().subList(baseIndex + targetItems.size() + 1, info.children().size())){
+                            if(te.className().equals("imgs")){      // 图片组
+                                for(int i = 0; i < te.children().size(); ++i){
+                                    targetItems.get(i).HeaderUrl = PROTOCOL + te.child(i).child(0).attr("src").replace("/g/","/l/");
+                                }
+                            }
+                            if(te.className().equals("collectInfo")){   // 收藏信息
+                                for(Element ce : te.children()){
+                                    if(ce.className().equals("quote")){     // 评论
+                                        common.Comment = ce.child(0).ownText();
+                                    }else{                                  // 评分
+                                        common.Stars = ce.attr("class").split(" ")[0].replace("sstars","");
+                                    }
+                                }
+                            }
+                        }
+
+                        common.TargetItems = targetItems;
+                        common.StrAction = strAction.replace(" ","");
+                        common.StrObject = strObject.replace(" ","");
+                    }
+                }else{
+                    if(info.child(1).attr("class").equals("status")){   // 签名或者发的消息
+                        String tStr = info.getElementsByClass("status").first().ownText();
+                        if(tStr.startsWith("更新了签名")){   // 更新签名
+                            common.StrAction = "更新了签名";
+                            common.StrObject = tStr.split(":")[1];
+                        }else{                              // 发出哀嚎
+                            common.StrAction = "发出了哀嚎";
+                            common.Comment = tStr;
+                        }
+                    }else{
+                        Log.d("DEBUG","其他类型消息？");
+                    }
+                }
+                Elements tEs = info.getElementsByClass("info_sub");
+                if(tEs.size() != 0 && !tEs.first().child(0).ownText().equals("")){
+                    common.ParentItemTitle  =  tEs.first().child(0).ownText();
+                    String[] ttStrs         =  tEs.first().child(0).attr("href").split("/");
+                    common.ParentDepartmentType = ttStrs[3];
+                    common.ParentItemId     =  ttStrs[4];
+                }
+                if(common.TargetItems != null && common.TargetItems.size() == 1 && !targetHeaderUrl.equals("")){
+                    common.TargetItems.get(0).HeaderUrl = targetHeaderUrl;
+                }
+                String[] tStrSet = info.getElementsByClass("date").first().ownText().split("·");
+                common.StrDate = tStrSet[0].replace(" ","");
+                common.Platform = tStrSet[1].replace(" ","");
+                common.Submitter = submitter;
+                result.add(common);
+            }
+            if(result.size() == 0)
+                return  null;
+            return result;
+        }
+        @Override
+        void UpdateUI(ArrayList<TimeLineCommon> result) {
             mFragment.updateUI(result);
         }
     }
+    private class TopicParser extends  DOMParser<TopicItem>{
+        private OnWebspiderReturnListener mListener;
+        TopicParser(OnWebspiderReturnListener listener){
+            mListener = listener;
+        }
+        @Override
+        TopicItem ParseDOM(Document doc) {
+            if(doc == null)
+                return null;
+            TopicItem data = ElementParser.ParseTopicItem(doc);
+            return data;
+        }
+        @Override
+        void UpdateUI(TopicItem result) {
+            if(result == null)
+                mListener.onFailed(null);
+            else
+                mListener.onSuccess(result);
+        }
+    }
+
 
     // API控制
 
@@ -551,13 +823,12 @@ public class WebSpider {
             Document doc;
             try {
                 if(mParent.WebCookies.map == null){
-                    sWebSpider.WebCookies.map.putAll(Jsoup.connect(WebSpider.BASE_SITE).timeout(3000).execute().cookies());
+                    sWebSpider.WebCookies.map.putAll(Jsoup.connect(WebSpider.PROTOCOL + WebSpider.BASE_SITE).timeout(3000).execute().cookies());
                     if(mParent.WebCookies == null)
                         return null;
                 }
                 Connection con = Jsoup.connect(TargetUrl)
                         .cookies(mParent.WebCookies.map)
-                        .timeout(3000)
                         .parser(Parser.xmlParser());
                 doc = con.get();
                 mParent.WebCookies.map.putAll(con.response().cookies());
@@ -769,6 +1040,40 @@ public class WebSpider {
             }
         }
     }
+    public static class AsyncApiTask extends AsyncTask<Void, Void, JSONObject>{
+        private String mTargetUrl;
+        private OnApiResponseListener mListener;
+        AsyncApiTask(String targetUrl, OnApiResponseListener listener){
+            mTargetUrl = targetUrl;
+            mListener = listener;
+        }
+        @Override
+        protected JSONObject doInBackground(Void... voids) {
+            JSONObject data;
+            Connection con = Jsoup.connect(mTargetUrl).timeout(5000);
+            con.header("Accept","application/json");
+            con.cookies(sWebSpider.APICookies.map);
+            con.ignoreContentType(true);
+
+            try{
+                data = JSONObject.parseObject(con.get().body().text());
+            }catch (Exception e){
+                Log.d("DEBUG-KERNEL",e.toString());
+                return null;
+            }
+            return data;
+        }
+        @Override
+        protected void onPostExecute(JSONObject data){
+            if(data == null) {
+                mListener.onFailed(null);
+            }else if(data.containsKey("error")){
+                mListener.onFailed(data);
+            }else{
+                mListener.onSuccess(data);
+            }
+        }
+    }
 
 
     private int syn_lock = 0;
@@ -823,7 +1128,7 @@ public class WebSpider {
     }
     public void Search(String keyWords, String type, int page, FragmentSearchResult fm){
         String targetUrl;
-        targetUrl = BASE_SITE + "subject_search/" + WebSpider.StringFilter(keyWords) + "?cat=" + type;
+        targetUrl = PROTOCOL + BASE_SITE + "/subject_search/" + WebSpider.StringFilter(keyWords) + "?cat=" + type;
         if (page > 0){
             targetUrl += "&page=" + page;
         } else {
@@ -845,12 +1150,23 @@ public class WebSpider {
     public void GetCommentList(String url, ActivityCommentList activity){
         new AsyncTaskNetwork(this, new CommentListParser(activity),url).execute();
     }
+    public void GetCommentList(String url, OnWebspiderReturnListener listener){
+        new AsyncTaskNetwork(this, new CommentListParserNew(listener),url).execute();
+    }
     public void GetCharacterList(String Url, ActivityCharactersList activity){
         new AsyncTaskNetwork(this, new CharacterListParser(activity),Url).execute();
     }
-    public void GetHomepage(FragmentHome home){
-        new AsyncTaskNetwork(this, new HomepageParser(home),"http://bgm.tv/").execute();
+    public void GetHomepage(FragmentHome fragmentHome){
+        new AsyncTaskNetwork(this, new HomepageParser(fragmentHome),"http://bgm.tv/").execute();
     }
+    public void GetTimeLine(FragmentTimeLine fragment, int page){
+        String strUrl = WebSpider.PROTOCOL +WebSpider.BASE_SITE + "/timeline?type=all&ajax=1&_=" + (new Date().getTime()) + "page=" + page ;
+        new AsyncTaskNetwork(this, new TimeLineParser(fragment), PROTOCOL + BASE_SITE + "/timeline?type=all&page=" + page + "&ajax=1&").execute();
+    }
+    public void GetTopicItem(String departmentType, String topicId, OnWebspiderReturnListener listener){
+        new AsyncTaskNetwork(this,new TopicParser(listener), PROTOCOL + BASE_SITE + "/" + departmentType + "/topic/" +topicId ).execute();
+    }
+
 
 
     public static WebSpider get(Context context) {
@@ -996,5 +1312,10 @@ public class WebSpider {
         SharedPreferences.Editor editor = sp.edit();
         editor.clear();
         editor.apply();
+    }
+
+    // API Method
+    public void APIFetchSubjectDetail(String id, OnApiResponseListener listener){
+        new AsyncApiTask(PROTOCOL + BAST_API_SITE + "/subject/" + id + "?responseGroup=large", listener).execute();
     }
 }

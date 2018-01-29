@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
+    <!-- <color name="colorPrimary">#3F51B5</color> -->
+    <color name="colorPrimary">#f09199</color>
+    <color name="colorPrimaryDark">#f09199</color>
     <color name="colorAccent">#FF4081</color>
     <color name="colorTag">#EFEFEF</color>
-    <color name="colorTagText">#008899</color>
+    <color name="colorTagText">#03a9f4</color>
     <color name="colorTagBorder">#AAAAAA</color>
     <color name="colorDetailFront">#FFFFFF</color>
     <color name="colorDetailBack">#EEEEEE</color>
@@ -19,4 +20,5 @@
     <color name="colorEpisodeWatchedBackground">#4897ff</color>
     <color name="colorScoreText">#E800A4</color>
     <color name="colorBangumiMain">#f09199</color>
+    <color name="colorGray">#AAAAAA</color>
 </resources>

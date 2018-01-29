@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
+    android:orientation="horizontal"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <ImageView
+        android:layout_marginTop="8dp"
+        android:id="@+id/item_topic_sub_reply_header_view"
+        android:layout_width="32dp"
+        android:layout_height="32dp" />
+    <LinearLayout
+        android:layout_marginStart="6dp"
+        android:orientation="vertical"
+        android:paddingTop="8dp"
+        android:paddingRight="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:textSize="12sp"
+                android:text="默不作声的结城照美（仮） "
+                android:id="@+id/item_topic_sub_reply_nickname_view"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+            <org.sufficientlysecure.htmltextview.HtmlTextView
+                android:id="@+id/item_topic_sub_reply_datetime"
+                android:layout_marginTop="-3dp"
+                android:textSize="9sp"
+                android:text="#9 - 2018-1-16 16:18"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+        <moe.exmagic.tricks.banguminews.htmltextview.HtmlTextView
+            android:id="@+id/item_topic_sub_reply_html_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <ImageView
+            android:background="#CCCCCC"
+            android:layout_width="match_parent"
+            android:layout_height="1dp" />
+    </LinearLayout>
+</LinearLayout>

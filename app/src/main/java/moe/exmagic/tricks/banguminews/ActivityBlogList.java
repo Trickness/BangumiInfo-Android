@@ -111,7 +111,7 @@ public class ActivityBlogList extends FragmentActivity implements SwipeRefreshLa
             BlogItem item = mBlogs.get(position);
             holder.mBlogTitle.setText(item.Title);
             holder.mBlogPreview.setText(item.BlogPreview);
-            holder.mSubmitInfo.setText("by " + item.Submitter.UserNickname + " " + item.SubmitDatetime + item.BlogCommentNumber);
+            holder.mSubmitInfo.setText("by " + item.Submitter.UserNickname + " " + item.SubmitDatetime + item.BlogReplyNumber);
             holder.pBlogItem = mBlogs.get(position);
         }
         @Override

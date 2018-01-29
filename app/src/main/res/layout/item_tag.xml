@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:textSize="13sp"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+<LinearLayout
     android:background="@drawable/tag_border"
     android:paddingLeft="4dp"
     android:paddingRight="4dp"
@@ -12,5 +8,24 @@
     android:layout_marginLeft="3dp"
     android:layout_marginRight="3dp"
     android:layout_marginTop="3dp"
-    android:textColor="@color/colorTagText"
-    android:text="TEST ITEM"/>
+    android:orientation="horizontal"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/tag_text_view"
+        android:textSize="13sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorTagText"
+        android:text="TEST ITEM"/>
+    <TextView
+        android:id="@+id/tags_num_view"
+        android:layout_marginTop="-2dp"
+        android:layout_marginStart="4dp"
+        android:textColor="#AAAAAA"
+        android:text="5"
+        android:textSize="9sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+</LinearLayout>

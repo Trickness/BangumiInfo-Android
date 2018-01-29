@@ -4,10 +4,13 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -32,7 +35,11 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Transformation;
 
 import moe.exmagic.tricks.banguminews.Fragments.FragmentDiscussion;
-import moe.exmagic.tricks.banguminews.Fragments.FragmentHome;
+import moe.exmagic.tricks.banguminews.Fragments.HomePage.FragmentGroup;
+import moe.exmagic.tricks.banguminews.Fragments.HomePage.FragmentHome;
+import moe.exmagic.tricks.banguminews.Fragments.HomePage.FragmentRakuen;
+import moe.exmagic.tricks.banguminews.Fragments.HomePage.FragmentTimeLine;
+import moe.exmagic.tricks.banguminews.Utils.MyPagerViewAdapter;
 import moe.exmagic.tricks.banguminews.WebSpider.OnLoginListener;
 import moe.exmagic.tricks.banguminews.WebSpider.WebSpider;
 
@@ -46,19 +53,29 @@ public class ActivityMain extends AppCompatActivity
     private TextView    mNavNicknameView;
     private TextView    mNavSignView;
     private RoundedImageView mNavHeaderView;
+    private CoordinatorLayout mMainLayout;
+
+    private MyPagerViewAdapter pAdapter;
 
     private boolean     isLoadingWebAuth = false;
     private boolean     isLoadingApiAuth = false;
+    private boolean     authTried       = false;
 
     private static final int REQUEST_CODE_LOGIN = 0;
 
     // Fragment
     FragmentHome mFragmentHome;
     FragmentDiscussion mFragmentDiscussion;
+    FragmentGroup mFragmentGroup;
+    FragmentRakuen mFragmentRakuen;
+    FragmentTimeLine mFragmentTimeLine;
 
     Fragment mCurrentFragment;
 
-    private Transformation mHeaderTransform;
+    private static Transformation mHeaderTransform = new RoundedTransformationBuilder()
+            .cornerRadiusDp(32)
+            .oval(false)
+            .build();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,19 +85,52 @@ public class ActivityMain extends AppCompatActivity
         mSearchView = (MaterialSearchView) findViewById(R.id.search_view);
         mToolbar = (Toolbar) findViewById(R.id.main_activity_toolbar);
 
+        // Fragments
+        mFragmentHome = FragmentHome.newInstance();
+        mFragmentGroup = FragmentGroup.newInstance();
+        mFragmentRakuen = FragmentRakuen.newInstance();
+        mFragmentTimeLine = FragmentTimeLine.newInstance();
+
+
+        ViewPager viewPager =  findViewById(R.id.main_activity_pager);
+        TabLayout tabLayout =  findViewById(R.id.main_activity_toolbar_tab);
+        if(viewPager != null){
+            setupViewPager(viewPager);
+            viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                @Override
+                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+                }
+
+                @Override
+                public void onPageSelected(int position) {
+                    Log.d("DEBUG","SELECTED");
+                }
+
+                @Override
+                public void onPageScrollStateChanged(int state) {
+
+                }
+            });
+            tabLayout.setupWithViewPager(viewPager);
+        }else{
+            Log.d("DEBUG","VIEW PAGER IS NULL");
+        }
+
+
         setSupportActionBar(mToolbar);
 
 
 
         // Floating button
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+/*        fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_INDEFINITE)
                         .setAction("Action", null).show();
             }
-        });
+        });*/
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this,drawer,mToolbar,R.string.navigation_drawer_open,R.string.navigation_drawer_close);
@@ -108,30 +158,23 @@ public class ActivityMain extends AppCompatActivity
             }
         });
 
-        mHeaderTransform = new RoundedTransformationBuilder()
-                .cornerRadiusDp(32)
-                .oval(false)
-                .build();
 
-
-        // Fragments
-        mFragmentDiscussion = FragmentDiscussion.newInstance();
-        mFragmentHome = FragmentHome.newInstance();
-
-        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+        // 默认页面
+        /*FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
         fragmentTransaction.add(R.id.main_fragment_container,mFragmentHome).commit();
-        mCurrentFragment = mFragmentHome;
+        mCurrentFragment = mFragmentHome;*/
 
-
-        if(!WebSpider.get(getApplicationContext()).getAuthStatus()){
-            //isLoadingApiAuth = true;
+        // 登录部分
+        if(!WebSpider.get(getApplicationContext()).getAuthStatus() && !authTried){
+            authTried = true;   // only automatic auth once
+            isLoadingApiAuth = true;
             isLoadingWebAuth = true;
-            /*WebSpider.get(getApplicationContext()).CheckAPIAuthStatus(new OnLoginListener() {
+            WebSpider.get(getApplicationContext()).CheckAPIAuthStatus(new OnLoginListener() {
                 @Override
                 public void onSuccess(JSONObject data) {
                     isLoadingApiAuth = false;
                     Log.d("DEBUG",data.toString());
-                    Toast toast = Toast.makeText(getApplicationContext(),"API 已成功登陆",Toast.LENGTH_SHORT);
+                    Toast toast = Toast.makeText(getApplicationContext(),"API 已成功登录",Toast.LENGTH_SHORT);
                     toast.setGravity(Gravity.CENTER,0,0);
                     toast.show();
                     onAPISuccessLogin();
@@ -147,21 +190,18 @@ public class ActivityMain extends AppCompatActivity
                     isLoadingApiAuth = false;
                     try{
                         WebSpider.get(getApplicationContext()).ClearSavedStatus(getApplicationContext());
-                        Toast toast = Toast.makeText(getApplicationContext(),"API 自动登陆失败(".concat(data.getString("error")).concat(")"),Toast.LENGTH_SHORT);
+                        Toast toast = Toast.makeText(getApplicationContext(),"API 自动登录失败(".concat(data.getString("error")).concat(")"),Toast.LENGTH_SHORT);
                         toast.setGravity(Gravity.CENTER,0,0);
                         toast.show();
                     }catch (JSONException e){
                         Log.d("DEBUG",e.toString());
                     }
                 }
-            });*/
+            });
             WebSpider.get(getApplicationContext()).CheckWebAuthStatus(new OnLoginListener() {
                 @Override
                 public void onSuccess(JSONObject data) {
                     isLoadingWebAuth = false;
-                    Toast toast = Toast.makeText(getApplicationContext(), "WEB 自动登陆成功", Toast.LENGTH_SHORT);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
                     onWebSuccessLogin();
                 }
 
@@ -174,8 +214,8 @@ public class ActivityMain extends AppCompatActivity
                 public void onFailed(JSONObject data) {
                     isLoadingWebAuth = false;
                     try{
-                        WebSpider.get(getApplicationContext()).ClearSavedStatus(getApplicationContext());
-                        Toast toast = Toast.makeText(getApplicationContext(),"WEB 自动登陆失败(".concat(data.getString("error")).concat(")"),Toast.LENGTH_SHORT);
+                        //WebSpider.get(getApplicationContext()).ClearSavedStatus(getApplicationContext());
+                        Toast toast = Toast.makeText(getApplicationContext(),"WEB 自动登录失败",Toast.LENGTH_SHORT);
                         toast.setGravity(Gravity.CENTER,0,0);
                         toast.show();
                     }catch (JSONException e){
@@ -184,6 +224,14 @@ public class ActivityMain extends AppCompatActivity
                 }
             });
         }
+    }
+    private void setupViewPager(ViewPager viewPager){
+        pAdapter = new MyPagerViewAdapter(getFragmentManager());
+        pAdapter.addFragment(mFragmentHome,"热点话题");
+        pAdapter.addFragment(mFragmentRakuen,"超展开");        // 这不是乐园么？！
+        pAdapter.addFragment(mFragmentTimeLine,"时空管理局");
+        pAdapter.addFragment(mFragmentGroup,"小组");
+        viewPager.setAdapter(pAdapter);
     }
     @Override
     public void onBackPressed() {
@@ -215,6 +263,9 @@ public class ActivityMain extends AppCompatActivity
                 Log.d("DEBUG","CLICKED");
             }
         });
+        mMainLayout = (CoordinatorLayout) findViewById(R.id.menu_coord_layout);
+        Snackbar.make(mMainLayout, "正在尝试登录中......", Snackbar.LENGTH_INDEFINITE).setAction("Action", null).show();
+
         return true;
     }
 
@@ -263,17 +314,32 @@ public class ActivityMain extends AppCompatActivity
     }
 
     public void onAPISuccessLogin(){
+        if(isLoadingWebAuth)
+            Snackbar.make(mMainLayout, "Api 登录已成功，正在登录到 Web......", Snackbar.LENGTH_INDEFINITE).setAction("Action", null).show();
+        else
+            Snackbar.make(mMainLayout, "登录成功", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
         JSONObject data = WebSpider.get(getApplicationContext()).getAuthInfo();
         Picasso.with(getApplicationContext()).load(data.getJSONObject("avatar").getString("large"))
                 .transform(mHeaderTransform)
                 .into(mNavHeaderView);
-
         mNavNicknameView.setText(data.getString("nickname"));
         mNavSignView.setText(data.getString("sign"));
+
+        /*Intent intent = new Intent(getApplicationContext(), ActivityItemDetail.class);
+        intent.putExtra(ActivityItemDetail.EXTRA_DETAIL_ITEM_ID,"212279");
+        startActivity(intent);*/
     }
 
     public void onWebSuccessLogin(){
+        if(isLoadingApiAuth)
+            Snackbar.make(mMainLayout, "Web 登录已成功，正在登录到 API......", Snackbar.LENGTH_INDEFINITE).setAction("Action", null).show();
+        else
+            Snackbar.make(mMainLayout, "登录成功", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
         mFragmentHome.Refresh();
+        mFragmentTimeLine.startRefresh();
+        //WebSpider.get(getApplicationContext()).GetTopicItem();
+
+        //WebSpider.get(getApplicationContext()).GetItemDetail("http://bgm.tv/subject/207195",new ActivityItemDetail());
     }
 
     // 处理Login Activity传回的结果

@@ -173,10 +173,8 @@ public class FragmentSearchResult extends Fragment {
         public void onClick(View v) {
             Intent intent = new Intent(getActivity(), ActivityItemDetail.class);
             Bundle bundle = new Bundle();
-            bundle.putSerializable(ActivityItemDetail.EXTRA_ITEM_DETAIL_BASEITEM,pBaseItem);
-            // TODO: Fix this cookies reference
 //            bundle.putSerializable(ActivityItemDetail.EXTRA_WEBSPIDER_COOKIES,WebSpider.get(getContext()).WebCookies);
-            intent.putExtra(ActivityItemDetail.EXTRA_ITEM_DETAIL,bundle);
+            intent.putExtra(ActivityItemDetail.EXTRA_DETAIL_ITEM_ID,String.valueOf(pBaseItem.ItemId));
             startActivity(intent);
         }
     }

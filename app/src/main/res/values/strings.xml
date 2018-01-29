@@ -7,6 +7,8 @@
     <string name="ask_for_login">请登陆</string>
     <string name="login_button">⭐Down The Rabbit Hole⭐</string>
     <string name="default_sign">Why is a raven like a writing desk?"</string>
+    <string name="main_group_topic_title">小组话题</string>
+    <string name="main_subject_topic_title">热门条目</string>
 
     <string name="action_settings">Settings</string>
 
@@ -14,7 +16,13 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="nav_home">主页</string>
-    <string name="nav_dis">话题</string>
+    <string name="nav_dis">小组话题</string>
     <string name="nav_progress">进度管理</string>
+    <string name="nav_time_line">时空管理局</string>
+    <string name="nav_rakuen">超展开</string>
     <string name="nav_self_info">我的信息</string>
+
+    <string name="star">🌝</string>
+    <string name="half_star">🌓</string>
+    <string name="no_star">🌚</string>
 </resources>

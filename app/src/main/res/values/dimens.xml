@@ -10,6 +10,10 @@
     <dimen name="nav_header_vertical_spacing">32dp</dimen>
     <dimen name="nav_header_height">176dp</dimen>
 
-    <dimen name="topic_compact_header_size">64dp</dimen>
-    <dimen name="topic_compact_title_size">21sp</dimen>
+    <dimen name="topic_compact_header_size">42dp</dimen>
+    <dimen name="topic_compact_title_size">15sp</dimen>
+    <dimen name="topic_compact_department_name_size">11sp</dimen>
+    <dimen name="time_line_target_item_header_height">60dp</dimen>
+
+    <dimen name="collection_box_action_font_size">15sp</dimen>
 </resources>

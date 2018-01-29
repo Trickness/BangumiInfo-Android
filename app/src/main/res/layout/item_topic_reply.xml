@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:layout_marginTop="16dp"
+    android:orientation="horizontal"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <ImageView
+        android:layout_marginTop="8dp"
+        android:id="@+id/item_topic_reply_header_view"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
+    <LinearLayout
+        android:background="@drawable/comment_compact_border"
+        android:layout_marginStart="8dp"
+        android:orientation="vertical"
+        android:paddingStart="8dp"
+        android:paddingTop="8dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:text="默不作声的结城照美（仮） "
+                android:id="@+id/item_topic_reply_nickname_view"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/item_topic_reply_datetime"
+                android:layout_marginTop="-3dp"
+                android:textSize="9sp"
+                android:text="#9 - 2018-1-16 16:18"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+        <TextView
+            android:textSize="8sp"
+            android:text="(ユーフェミア·リ·ブリタニア/Euphemia Li Britannia ...) "
+            android:textColor="#AAAAAA"
+            android:id="@+id/item_topic_reply_sign_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <moe.exmagic.tricks.banguminews.htmltextview.HtmlTextView
+            android:id="@+id/item_topic_reply_html_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/item_topic_reply_subreply_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+</LinearLayout>

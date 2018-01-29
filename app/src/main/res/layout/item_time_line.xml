@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:id="@+id/time_line_item_container"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_marginTop="16dp"
+    android:layout_marginBottom="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.makeramen.roundedimageview.RoundedImageView
+        android:layout_marginTop="8dp"
+        android:id="@+id/time_line_submitter_header_view"
+        android:layout_width="@dimen/topic_compact_header_size"
+        android:layout_height="@dimen/topic_compact_header_size" />
+    <LinearLayout
+        android:id="@+id/time_line_content_container"
+        android:orientation="vertical"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"/>
+</LinearLayout>

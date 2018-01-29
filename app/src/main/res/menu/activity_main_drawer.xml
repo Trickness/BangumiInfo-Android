@@ -17,6 +17,14 @@
             android:icon="@mipmap/ic_menu_progress"
             android:title="@string/nav_progress" />
         <item
+            android:id="@+id/nav_rakuen"
+            android:icon="@mipmap/ic_menu_rakuen"
+            android:title="@string/nav_rakuen" />
+        <item
+            android:id="@+id/nav_time_line"
+            android:icon="@mipmap/ic_menu_time_line"
+            android:title="@string/nav_time_line" />
+        <item
             android:id="@+id/nav_self_info"
             android:icon="@mipmap/ic_menu_self_info"
             android:title="@string/nav_self_info" />
